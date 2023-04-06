@@ -110,7 +110,29 @@ int main(int argc, char const* argv[]) {
         read_fds = master;
         if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
             perror("server.cpp - select");
+            exit(4);
+        }
+
+        // Iterate over file descriptors & process each
+        for (int i=0; i <= fdmax; ++i) {
+            // Change in FD
+            if (FD_ISSET(i, &read_fds)) {
+                if (i == listener) {
+                    // Listener FD - new connection
+                    addrlen = sizeof(remoteaddr);
+                    newfd = accept(listener, (struct sockaddr *)&remoteaddr, &addrlen);
+                    if (newfd == -1) {
+                        perror("server.cpp - accept");
+                    }
+                    else {
+                        FD_SET(newfd, &master);
+                        fdmax = std::max(fdmax, newfd);
+                    }
+                }
+                else {
+                    // Handle communication from an existing connection
+                }
+            }
         }
     }
-    std::cout << "1" << '\n';
 }
