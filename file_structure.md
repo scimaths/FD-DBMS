@@ -1,9 +1,10 @@
 ### Directory Structure for FD-DBMS
 - db_list.txt
 - db-1
-    - rel_list.txt
+    - table_list.txt
     - constraints.txt
-    - rel-1
-        - metadata.txt
+    - table-1
+        - type.txt
+        - 
         - data.txt
 - db-2...

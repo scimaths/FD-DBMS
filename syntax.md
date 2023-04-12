@@ -1,0 +1,11 @@
+CREATE TABLE {
+    ATTR1 INT ;
+    ATTR2 FLOAT ;
+    ATTR3 STRING ;
+    ...
+    ATTRN TYPE ;
+    PRIMARY KEY (ATTR1, ATTR2, ... ATTRK) ;
+    UNIQUE (ATTR1, ATTR2, ... ATTRM) ;
+    UNIQUE (ATTR1, ATTR2, ... ATTRM) ;
+    UNIQUE (ATTR1, ATTR2, ... ATTRM) ;
+}

@@ -1,62 +1,132 @@
 #include <vector>
 #include <string>
-#include <fstream>
 #include <iostream>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include "query.h"
+#include "file.h"
 
 using namespace std;
 
-struct Query {
-    string query_type ;
-    string db_name ;
-} ;
+#define PATH_TO_DBLIST "db/db-list.txt"
 
-void process_query(Query &query) {
-    if (query.query_type == "CREATE DATABASE") {
 
-        ifstream in_db_list("./db/db-list.txt") ;
-        string db_name ;
-        if (in_db_list.is_open()) {
-            while ( getline (in_db_list, db_name) )
-            {
-                cout << db_name ;
-                if (query.db_name == db_name) {
-                    throw "Database " + db_name + " already exists\n" ;
-                }
-            }
-            in_db_list.close();
+void process_query(Query *query) {
+    if (query->query_type == "CREATE DATABASE") {
+
+        DatabaseQuery * databaseQuery = (DatabaseQuery*) query ;
+
+        vector<string> db_list ;
+        db_list = create_list_from_file("./db/db-list.txt") ;
+
+        if (count(db_list.begin(), db_list.end(), databaseQuery->db_name)) {
+            throw "Database " + databaseQuery->db_name + " already exists\n" ;
         }
 
-        ofstream out_db_list("./db/db-list.txt") ;
-        if (out_db_list.is_open()) {
-            out_db_list << query.db_name << endl ;
-            out_db_list.close() ;
-        }
+        append_item_to_file("./db/db-list.txt", databaseQuery->db_name) ;
         
-        mkdir(("./db/"+query.db_name).c_str(), 0777) ;
-        fstream file ;
-        file.open("./db/"+query.db_name+"/rel_list.txt") ;
-        if(file.is_open()) {
-            file.close() ;
-        }
-        file.open("./db/"+query.db_name+"/constraints.txt") ;
-        if(file.is_open()) {
-            file.close() ;
+        create_folder("./db/"+databaseQuery->db_name) ;
+        create_file("./db/"+databaseQuery->db_name+"/table_list.txt") ;
+        create_file("./db/"+databaseQuery->db_name+"/constraints.txt") ;
+
+        return ;
+    }
+
+    if (query->query_type == "CONNECT DATABASE") {
+
+        DatabaseQuery * databaseQuery = (DatabaseQuery*) query ;
+
+        vector<string> db_list ;
+        db_list = create_list_from_file("./db/db-list.txt") ;
+
+        if (count(db_list.begin(), db_list.end(), databaseQuery->db_name)==0) {
+            throw "Database " + databaseQuery->db_name + " does not exist\n" ;
         }
 
         return ;
     }
 
-    if (query.query_type == "DROP DATABASE") {
+    if (query->query_type == "DROP DATABASE") {
+
+        DatabaseQuery * databaseQuery = (DatabaseQuery*) query ;
         
+        vector<string> db_list ;
+        db_list = create_list_from_file("./db/db-list.txt") ;
+
+        if (count(db_list.begin(), db_list.end(), databaseQuery->db_name)==0) {
+            throw "Database " + databaseQuery->db_name + " does not exists\n" ;
+        }
+
+        db_list.erase(find(db_list.begin(), db_list.end(), databaseQuery->db_name)) ;
+
+        write_list_to_file("./db/db-list.txt", db_list) ;
+        delete_folder("./db/"+databaseQuery->db_name) ;
+
+        return ;
     }
+    
+    if (query->query_type == "CREATE TABLE") {
+
+        CreateTableQuery * query = (CreateTableQuery*) query ;
+
+        if (check_item_in_file(query->get_dbPath()+"/table-list", query->table_name)) {
+            throw query->table_name + " already exists" ;
+        } 
+
+        create_folder(query->get_tablePath()) ;
+        create_file(query->get_tablePath() + "/local.txt") ;
+        create_file(query->get_tablePath() + "/type.txt") ;
+        create_file(query->get_tablePath() + "/data.txt") ;
+
+        vector<string> attrList ;
+        for (auto attr: query->attrMap) {
+            attrList.push_back(attr.first + " " + attr.second.type) ;
+        }
+        write_list_to_file(query->get_tablePath() + "/type.txt", attrList) ;
+
+
+
+        return ;
+
+    }
+
+    if (query->query_type == "DROP TABLE") {
+
+        TableQuery * query = (TableQuery*) query ;
+
+        if (check_item_in_file(query->get_dbPath()+"/table-list", query->table_name)) {
+            throw query->table_name + " does not exist" ;
+        } 
+
+        // Handle Constraints 
+        // delete from table list
+
+        delete_folder(query->get_tablePath()) ;
+
+        return ;
+
+    }
+
+    if (query->query_type == "SELECT") {
+        return ;
+    }
+
     
 }
 
 int main() {
-    Query q ;
-    q.db_name = "abc" ;
-    q.query_type = "CREATE DATABASE" ;
-    process_query(q) ;
+    DatabaseQuery q ;
+    q.db_name = "b" ;
+    q.query_type = "DROP DATABASE" ;
+    try
+    {
+        process_query(&q) ;
+    }
+    catch(string s)
+    {
+        std::cerr << s << '\n';
+    }
+    
+    
 }

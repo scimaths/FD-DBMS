@@ -6,6 +6,8 @@ class QueryParser:
             'DELETE',
             'UPDATE',
             'CREATE DATABASE',
+            'CONNECT DATABASE',
+            'DROP DATABASE',
             'CREATE TABLE',
             'FUNCDEP'
         ]
