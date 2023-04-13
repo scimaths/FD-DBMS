@@ -6,11 +6,11 @@
 #include <unistd.h>
 #include "query.h"
 #include "file.h"
+#include "metadata.h"
 
 using namespace std;
 
 #define PATH_TO_DBLIST "db/db-list.txt"
-
 
 void process_query(Query *query) {
     if (query->query_type == "CREATE DATABASE") {
@@ -75,20 +75,15 @@ void process_query(Query *query) {
         } 
 
         create_folder(query->get_tablePath()) ;
-        create_file(query->get_tablePath() + "/local.txt") ;
-        create_file(query->get_tablePath() + "/type.txt") ;
+        create_file(query->get_tablePath() + "/metadata.txt") ;
         create_file(query->get_tablePath() + "/data.txt") ;
 
-        vector<string> attrList ;
-        for (auto attr: query->attrMap) {
-            attrList.push_back(attr.first + " " + attr.second.type) ;
-        }
-        write_list_to_file(query->get_tablePath() + "/type.txt", attrList) ;
+        // syntactic check of pkList is indeed subset of attrList
 
-
-
+        TableMetadata tableMetadata(query->attrList, query->attrMap, query->pkList) ;
+        tableMetadata.dump(query->get_tablePath() + "/metadata.txt") ;
+        
         return ;
-
     }
 
     if (query->query_type == "DROP TABLE") {
@@ -118,7 +113,7 @@ void process_query(Query *query) {
 int main() {
     DatabaseQuery q ;
     q.db_name = "b" ;
-    q.query_type = "DROP DATABASE" ;
+    q.query_type = "CREATE DATABASE" ;
     try
     {
         process_query(&q) ;

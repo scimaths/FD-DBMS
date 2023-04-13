@@ -1,0 +1,7 @@
+numattr
+ATTR1 TYPE1
+ATTR2 TYPE2
+...
+ATTRN TYPEN
+PK1 PK2 PK3 ... PKM
+

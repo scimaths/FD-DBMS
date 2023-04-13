@@ -1,5 +1,11 @@
+#include <string> 
+
+using namespace std;
+
 class Type {
     public:
-    std::string type ;
+    string type ;
     int size ;
+
+    Type(string type) ;
 } ;
