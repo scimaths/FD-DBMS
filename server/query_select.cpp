@@ -1,11 +1,5 @@
 #include "query_select.h"
 
-vector<char> brkt_tokens{'(', ')'};
-vector<char> cmp_char{'<', '>', '!', '='};
-vector<string> cmp_tokens{"<=", ">=", "!=", "><", "<", ">", "="};
-vector<string> or_and_tokens{"||", "&&"};
-vector<string> op_tokens{"+", "-", "/", "*", ":"};
-
 // Tokenize query filter substring into tokens (for parsing of filters and expressions)
 vector<string> filter_tokenize(string str_query) {
     vector<string> tokens;
@@ -82,85 +76,22 @@ vector<string> filter_tokenize(string str_query) {
     return tokens;
 }
 
-// Print filter tree for visualization and verification
-void dump(Filter* filter, int depth) {
-    if (filter == NULL) {return;}
-    cout << "Depth - " << depth << '\n';
-    cout << "Filter - ";
-    for (string token: filter->tokens) {cout << token << " ";}
-    cout << '\n';
-    dump(filter->left_child, depth + 1);
-    dump(filter->right_child, depth + 1);
-}
-
-// TODO - Handle operation tree
+// Initialize Filter Class - built tree for filter (with comparisons and expressions)
 Filter::Filter(vector<string> tokens) {
-    // Remove surrounding brackets
-    stack<int> st;
-    vector<int> brack_nums;
-    int brack_num = 0;
-    // For each pair of brackets, give a unique identifier (integer)
-    for (string token: tokens) {
-        // Add new entry to stack
-        if (token == "(") {
-            brack_num += 1;
-            st.push(brack_num);
-            brack_nums.push_back(brack_num);
-        }
-        // Pop first element off stack
-        else if (token == ")") {
-            brack_nums.push_back(st.top());
-            st.pop();
-        }
-    }
+    // Strip brackets from filter
+    tokens = strip_brackets_from_tokens(tokens);
+    this->tokens = tokens;
 
-    // Remove brackets from start and end
-    int start = 0;
-    while (true) {
-        // Proceed inwards till outside brackets match
-        if (
-            tokens[start] == "(" && tokens[(int)tokens.size() - 1 - start] == ")"
-            &&
-            brack_nums[start] == brack_nums[(int)brack_nums.size() - 1 - start]
-            &&
-            (int)brack_nums.size() - 1 - start > start
-        ) {start++;}
-        else {break;}
-    }
-    // Copy squeezed tokens vector
-    vector<string> tokens_squeezed(tokens.size() - 2*start);
-    copy(tokens.begin() + start, tokens.end() - start, tokens_squeezed.begin());
-    this->tokens = tokens_squeezed;
-
-    // Handle sub-filters
-    int depth = 0, cnt = 0, left_start = 0, left_end = -1;
-    string cmp_token;
-    for (string token: tokens) {
-        cnt += 1;
-        // Increase depth on seeing (
-        if (token == "(") {depth++;}
-        // Decrease depth on seeing )
-        else if (token == ")") {depth--;}
-        // Subfilter without brackets
-        else if (
-            find(or_and_tokens.begin(), or_and_tokens.end(), token) != or_and_tokens.end()
-            &&
-            depth == 0
-        ) {
-            left_end = cnt - 1;
-            break;
-        }
-        // For atomic filter, set cmp_token (reached for atomic filter)
-        else if (find(cmp_tokens.begin(), cmp_tokens.end(), token) != cmp_tokens.end()) {
-            cmp_token = token;
-        }
-    }
+    // Get left_end and atomic token at top level
+    pair<int, string> left_end_atomic_token = separator_expression(tokens, or_and_tokens, cmp_tokens);
+    int left_end = left_end_atomic_token.first;
+    string cmp_token = left_end_atomic_token.second;
 
     // left_end set, so subfilters exist
     if (left_end != -1) {
         // Copy tokens to left and right subfilters
         vector<string> left_tokens(left_end), right_tokens((int)tokens.size() - left_end - 1);
-        copy(tokens.begin() + left_start, tokens.begin() + left_end, left_tokens.begin());
+        copy(tokens.begin(), tokens.begin() + left_end, left_tokens.begin());
         copy(tokens.begin() + left_end + 1, tokens.end(), right_tokens.begin());
 
         // Create the subfilters (recursive call)
@@ -170,12 +101,13 @@ Filter::Filter(vector<string> tokens) {
         // Set prod_sum
         if (tokens[left_end] == "&&") {this->prod_sum = 0;}
         else if (tokens[left_end] == "||") {this->prod_sum = 1;}
-        this->filter_op = "--";
+        this->atomic_filter = NULL;
     }
     // left_end not set, so no subfilters and this is an atomic filter
     else {
         // cmp_token contains the comparison for this filter
-        this->filter_op = cmp_token;
+        this->atomic_filter = new Comparison(tokens);
+        this->prod_sum = -1;
         this->right_child = NULL;
         this->left_child = NULL;
     }
@@ -201,12 +133,32 @@ bool Filter::check(Record* rec) {
     }
 }
 
+// Print filter tree for visualization and verification
+void dump(Filter* filter, int depth) {
+    // Base case (null-ptr)
+    if (filter == NULL) {return;}
+    
+    // Dump for FILTER
+    cout << "Depth - " << depth << '\n';
+    cout << "Filter - ";
+    for (string token: filter->tokens) {cout << token << " ";}
+    cout << '\n';
+    // Recursive dump for children
+    dump(filter->left_child, depth + 1);
+    dump(filter->right_child, depth + 1);
+    
+    // Dump for atomic filters
+    if (filter->atomic_filter != NULL) {
+        dump(filter->atomic_filter, depth + 1);
+    }
+}
+
 // TODO - Implement fetch with filters
 pair<bool, Record*> SelectQuery::fetch() {
 
 }
 
-int main() {
-    Filter* filter = new Filter("(a.b=3 && c.d+e.f-k><4) || (l.m*k >= 2 || (n != 4)) && x.y <= 3");
-    dump(filter, 0);
-}
+// int main() {
+//     Filter* filter = new Filter("(a.b=3 && c.d+e.f-k><4) || (l.m*k >= 2 || (n != 4)) && x.y <= 3");
+//     dump(filter, 0);
+// }
