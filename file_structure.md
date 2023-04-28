@@ -2,9 +2,9 @@
 - db_list.txt
 - db-1
     - table_list.txt
-    - constraints.txt
+    - global_constraints.txt
     - table-1
-        - type.txt
-        - 
+        - metadata.txt
+        - local_constraints.txt
         - data.txt
 - db-2...
