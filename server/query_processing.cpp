@@ -7,6 +7,7 @@
 #include "query.h"
 #include "file.h"
 #include "metadata.h"
+#include "local_constraint.h"
 
 using namespace std;
 
@@ -114,10 +115,16 @@ void process_query(Query *query) {
         TableMetadata tableMetaData ;
         tableMetaData.retrieve(query->get_tablePath()) ;
         if (!tableMetaData.check_val(query->valList)) {
-            throw "Value does not satisfy type constraint" ;
+            throw "Values do not satisfy type constraint" ;
         }
+        // Check Unique Constraint
 
-        // Check Local and Global Constraints
+        LocalConstraint LocalConstraint ;
+        LocalConstraint.retrieve(query->get_tablePath()) ;
+        if (!LocalConstraint.check(tableMetaData.create_record(query->valList))) {
+            throw "Values do not satisfy local constraints" ;
+        }
+        // Global Constraints
 
         string item = "" ;
         for (string val: query->valList) {

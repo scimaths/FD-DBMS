@@ -3,7 +3,7 @@
 using namespace std;
 
 TableMetadata::TableMetadata() {
-    
+
 }
 
 TableMetadata::TableMetadata(vector<string> attrList, map<string, Type> attrType, vector<string> pkList) {
@@ -27,7 +27,7 @@ void TableMetadata::dump(string pathname) {
         file.close() ;
     }
     else {
-        throw pathname + " not found" ;
+        throw pathname+"/metadata.txt" + " not found" ;
     }
 }
 
@@ -50,7 +50,7 @@ void TableMetadata::retrieve(string pathname) {
         file.close();
     }
     else {
-        throw pathname + " not found" ;
+        throw pathname+"/metadata.txt" + " not found" ;
     }
 }
 
@@ -79,4 +79,22 @@ bool TableMetadata::check_val(vector<string> valList) {
     }
 
     return true ;
+}
+
+Record TableMetadata::create_record(vector<string> valList) {
+    Record record ;
+    int iter = 0 ;
+    for (string attr: attrList) {
+        if(attrType[attr].type == "INT") {
+            record.elements[attr] = IntValue(stoi(valList[iter])) ;
+        }
+        else if(attrType[attr].type == "FLOAT") {
+            record.elements[attr] = FloatValue(stof(valList[iter])) ;
+        }
+        else if(attrType[attr].type == "STRING") {
+            record.elements[attr] = StringValue(valList[iter]) ;
+        }
+        iter++ ;
+    }
+    return record ;
 }

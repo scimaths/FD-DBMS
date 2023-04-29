@@ -35,7 +35,7 @@ Expression::Expression(vector<string> tokens) {
     }
 }
 
-Value* Expression::evaluate(Record* record) {
+Value* Expression::evaluate(Record& record) {
 
 }
 
@@ -78,7 +78,7 @@ Comparison::Comparison(vector<string> tokens) {
     this->right_expr = new Expression(right_tokens);
 }
 
-bool Comparison::evaluate(Record* record) {
+bool Comparison::evaluate(Record& record) {
     
 }
 

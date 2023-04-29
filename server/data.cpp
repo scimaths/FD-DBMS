@@ -13,21 +13,7 @@ void TableData::retrieve(string pathname) {
                 throw "Metadata doesn't match with data file" ;
             }
 
-            Record record ;
-            int iter = 0 ;
-            for (string attr: tableMetadata.attrList) {
-                if(tableMetadata.attrType[attr].type == "INT") {
-                    record.elements[attr] = IntValue(stoi(valList[iter])) ;
-                }
-                else if(tableMetadata.attrType[attr].type == "FLOAT") {
-                    record.elements[attr] = FloatValue(stof(valList[iter])) ;
-                }
-                else if(tableMetadata.attrType[attr].type == "STRING") {
-                    record.elements[attr] = StringValue(valList[iter]) ;
-                }
-                iter++ ;
-            }
-            recordList.push_back(record) ;
+            recordList.push_back(tableMetadata.create_record(valList)) ;
         }
         file.close();
     }
