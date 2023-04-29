@@ -11,12 +11,14 @@ class TableMetadata {
     
     vector<string> attrList ;
     map<string, Type> attrType ;
-    vector<string> pkList ;
+    vector<string> uniqueList ;
 
-    TableMetadata(vector<string> attrList, map<string, Type> attrType, vector<string> pkList) ;
+    TableMetadata() ;
+    TableMetadata(vector<string> attrList, map<string, Type> attrType, vector<string> uniqueList) ;
 
     void dump(string pathname) ;
     void retrieve(string pathname) ;
+    bool check_val(vector<string> valList) ; // check if valList satisfy attrType constraints
 } ;
 
 class DatabaseMetadata {

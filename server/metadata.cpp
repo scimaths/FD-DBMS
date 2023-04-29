@@ -2,21 +2,25 @@
 
 using namespace std;
 
+TableMetadata::TableMetadata() {
+    
+}
+
 TableMetadata::TableMetadata(vector<string> attrList, map<string, Type> attrType, vector<string> pkList) {
     this->attrList = attrList ;
     this->attrType = attrType ;
-    this->pkList = pkList ;
+    this->uniqueList = uniqueList ;
 }
 
 void TableMetadata::dump(string pathname) {
-    ofstream file(pathname, std::ios::trunc) ;
+    ofstream file(pathname+"/metadata.txt", std::ios::trunc) ;
     if (file.is_open()) {
         file << attrList.size() << "\n" ;
         for (string item: attrList) {
             file << item << " " << attrType[item].type << "\n" ;
         }
-        file << pkList.size() << "\n" ;
-        for (string item: pkList) {
+        file << uniqueList.size() << "\n" ;
+        for (string item: uniqueList) {
             file << item << " " ;
         }
         file << "\n" ;
@@ -28,9 +32,7 @@ void TableMetadata::dump(string pathname) {
 }
 
 void TableMetadata::retrieve(string pathname) {
-    vector<string> list ;
-
-    ifstream file(pathname) ;
+    ifstream file(pathname+"/metadata.txt") ;
     string item ;
     if (file.is_open()) {
         getline (file, item) ;
@@ -44,10 +46,37 @@ void TableMetadata::retrieve(string pathname) {
         }
 
         getline (file, item) ;
-        pkList = tokenize(item, " ") ;
+        uniqueList = tokenize(item, " ") ;
         file.close();
     }
     else {
         throw pathname + " not found" ;
     }
+}
+
+bool TableMetadata::check_val(vector<string> valList) {
+    if (valList.size() == attrList.size()) return false ;
+
+    int iter = 0 ;
+    for (string attr: attrList) {
+        if(attrType[attr].type == "INT") {
+            try {
+                stoi(valList[iter]) ;
+            }
+            catch (exception &err){
+                return false ;
+            }
+        }
+        else if(attrType[attr].type == "FLOAT") {
+            try {
+                stof(valList[iter]) ;
+            }
+            catch (exception &err){
+                return false ;
+            }
+        }
+        iter++ ;
+    }
+
+    return true ;
 }

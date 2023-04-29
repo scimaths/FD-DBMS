@@ -11,7 +11,7 @@ using namespace std;
 
 class Type {
     public:
-    string type ;
+    string type ; // INT, 
     int size ;
 
     Type(string type) ;
@@ -46,11 +46,11 @@ class FloatValue : public Value {
 
 class Record {
     public:
-    map<string, Value*> elements;
+    map<string, Value> elements;
 };
 
-vector<string> strip_brackets_from_tokens(vector<string> tokens);
-pair<int, string> separator_expression(vector<string> tokens, vector<string> separator_strs, vector<string> expression_ops);
+vector<string> strip_brackets_from_tokens(vector<string> tokens) ;
+pair<int, string> separator_expression(vector<string> tokens, vector<string> separator_strs, vector<string> expression_ops) ;
 
 const vector<char> brkt_tokens{'(', ')'};
 const vector<char> cmp_char{'<', '>', '!', '='};

@@ -37,7 +37,7 @@ class SelectQuery : public Query {
     vector<Filter*> filters;
     vector<Type> result_format;
 
-    pair<bool, Record*> fetch();
+    vector<Record> fetch();
 };
 
 vector<string> filter_tokenize(string str_query);

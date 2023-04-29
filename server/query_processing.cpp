@@ -78,9 +78,9 @@ void process_query(Query *query) {
         create_file(query->get_tablePath() + "/metadata.txt") ;
         create_file(query->get_tablePath() + "/data.txt") ;
 
-        // syntactic check of pkList is indeed subset of attrList
+        // syntactic check of uniqueList is indeed subset of attrList
 
-        TableMetadata tableMetadata(query->attrList, query->attrMap, query->pkList) ;
+        TableMetadata tableMetadata(query->attrList, query->attrMap, query->uniqueList) ;
         tableMetadata.dump(query->get_tablePath() + "/metadata.txt") ;
         
         return ;
@@ -105,6 +105,26 @@ void process_query(Query *query) {
 
     if (query->query_type == "SELECT") {
         return ;
+    }
+
+    if (query->query_type == "INSERT") {
+
+        InsertQuery * query = (InsertQuery*) query ;
+
+        TableMetadata tableMetaData ;
+        tableMetaData.retrieve(query->get_tablePath()) ;
+        if (!tableMetaData.check_val(query->valList)) {
+            throw "Value does not satisfy type constraint" ;
+        }
+
+        // Check Local and Global Constraints
+
+        string item = "" ;
+        for (string val: query->valList) {
+            item += val + ", " ;
+        }
+
+        append_item_to_file(query->get_tablePath()+"/data.txt", item) ;
     }
 
     

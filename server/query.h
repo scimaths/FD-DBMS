@@ -26,6 +26,11 @@ class CreateTableQuery : public TableQuery {
     public:
     vector<string> attrList ;
     map<string, Type> attrMap ;
-    vector<string> pkList ;
+    vector<string> uniqueList ;
+} ;
+
+class InsertQuery : public TableQuery {
+    public:
+    vector<string> valList ;
 } ;
 

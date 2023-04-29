@@ -154,8 +154,8 @@ void dump(Filter* filter, int depth) {
 }
 
 // TODO - Implement fetch with filters
-pair<bool, Record*> SelectQuery::fetch() {
-
+vector<Record> SelectQuery::fetch() {
+    
 }
 
 // int main() {
