@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <fstream>
+#include <iostream>
 #include <string> 
 #include "type.h"
 #include "token.h"
@@ -14,9 +15,11 @@ using namespace std;
 class TableData {
     public:
 
-    TableMetadata tableMetadata ;
+    TableMetadata* tableMetadata ;
     vector<Record> recordList ;
+    string table_path;
 
+    TableData(string pathname);
     void retrieve(string pathname) ;
 } ;
 

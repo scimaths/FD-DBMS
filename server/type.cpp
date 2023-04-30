@@ -30,6 +30,10 @@ FloatValue::FloatValue(float num) {
     this->type = 2;
 }
 
+void IntValue::print() {cout << this->num;}
+void StringValue::print() {cout << this->str;}
+void FloatValue::print() {cout << this->num;}
+
 vector<string> strip_brackets_from_tokens(vector<string> tokens) {
     // Remove surrounding brackets
     stack<int> st;

@@ -1,0 +1,5 @@
+4
+__id INT
+name STRING
+age INT
+weight FLOAT

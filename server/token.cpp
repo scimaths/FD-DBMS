@@ -20,6 +20,5 @@ vector<string> tokenize(string str, string delim) {
         tokenList.push_back(token) ;
         token = "" ;
     }
-
     return tokenList ;
 }

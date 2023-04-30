@@ -10,11 +10,12 @@ class TableMetadata {
     public:
     
     vector<string> attrList ;
-    map<string, Type> attrType ;
+    map<string, string> attrType ;
     vector<string> uniqueList ;
 
     TableMetadata() ;
-    TableMetadata(vector<string> attrList, map<string, Type> attrType, vector<string> uniqueList) ;
+    TableMetadata(string pathname) ;
+    TableMetadata(vector<string> attrList, map<string, string> attrType, vector<string> uniqueList) ;
 
     void dump(string pathname) ;
     void retrieve(string pathname) ;

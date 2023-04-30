@@ -2,6 +2,7 @@
 #define TYPE_HEADER
 
 #include <string> 
+#include <iostream> 
 #include <vector> 
 #include <stack>
 #include <map>
@@ -20,6 +21,8 @@ class Type {
 class Value {
     public:
     int type;
+
+    virtual void print() = 0;
 };
 
 class IntValue : public Value {
@@ -27,6 +30,7 @@ class IntValue : public Value {
     int num;
 
     IntValue(int num);
+    void print();
 };
 
 class StringValue : public Value {
@@ -35,6 +39,7 @@ class StringValue : public Value {
     int length;
 
     StringValue(string str);
+    void print();
 };
 
 class FloatValue : public Value {
@@ -42,11 +47,12 @@ class FloatValue : public Value {
     float num;
     
     FloatValue(float num);
+    void print();
 };
 
 class Record {
     public:
-    map<string, Value> elements;
+    map<string, Value*> elements;
 };
 
 vector<string> strip_brackets_from_tokens(vector<string> tokens) ;

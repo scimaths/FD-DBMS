@@ -6,7 +6,11 @@ TableMetadata::TableMetadata() {
 
 }
 
-TableMetadata::TableMetadata(vector<string> attrList, map<string, Type> attrType, vector<string> pkList) {
+TableMetadata::TableMetadata(string pathname) {
+    this->retrieve(pathname);
+}
+
+TableMetadata::TableMetadata(vector<string> attrList, map<string, string> attrType, vector<string> pkList) {
     this->attrList = attrList ;
     this->attrType = attrType ;
     this->uniqueList = uniqueList ;
@@ -17,7 +21,7 @@ void TableMetadata::dump(string pathname) {
     if (file.is_open()) {
         file << attrList.size() << "\n" ;
         for (string item: attrList) {
-            file << item << " " << attrType[item].type << "\n" ;
+            file << item << " " << attrType[item] << "\n" ;
         }
         file << uniqueList.size() << "\n" ;
         for (string item: uniqueList) {
@@ -32,6 +36,10 @@ void TableMetadata::dump(string pathname) {
 }
 
 void TableMetadata::retrieve(string pathname) {
+    attrList.clear();
+    attrType.clear();
+    uniqueList.clear();
+
     ifstream file(pathname+"/metadata.txt") ;
     string item ;
     if (file.is_open()) {
@@ -42,7 +50,7 @@ void TableMetadata::retrieve(string pathname) {
             getline (file, item) ;
             vector<string> attrData = tokenize(item, " ") ;
             attrList.push_back(attrData[0]) ;
-            attrType[attrData[0]] = Type(attrData[1]) ;
+            attrType[attrData[0]] = attrData[1] ;
         }
 
         getline (file, item) ;
@@ -59,7 +67,7 @@ bool TableMetadata::check_val(vector<string> valList) {
 
     int iter = 0 ;
     for (string attr: attrList) {
-        if(attrType[attr].type == "INT") {
+        if(attrType[attr] == "INT") {
             try {
                 stoi(valList[iter]) ;
             }
@@ -67,7 +75,7 @@ bool TableMetadata::check_val(vector<string> valList) {
                 return false ;
             }
         }
-        else if(attrType[attr].type == "FLOAT") {
+        else if(attrType[attr] == "FLOAT") {
             try {
                 stof(valList[iter]) ;
             }
@@ -85,14 +93,14 @@ Record TableMetadata::create_record(vector<string> valList) {
     Record record ;
     int iter = 0 ;
     for (string attr: attrList) {
-        if(attrType[attr].type == "INT") {
-            record.elements[attr] = IntValue(stoi(valList[iter])) ;
+        if(attrType[attr] == "INT") {
+            record.elements[attr] = new IntValue(stoi(valList[iter])) ;
         }
-        else if(attrType[attr].type == "FLOAT") {
-            record.elements[attr] = FloatValue(stof(valList[iter])) ;
+        else if(attrType[attr] == "FLOAT") {
+            record.elements[attr] = new FloatValue(stof(valList[iter])) ;
         }
-        else if(attrType[attr].type == "STRING") {
-            record.elements[attr] = StringValue(valList[iter]) ;
+        else if(attrType[attr] == "STRING") {
+            record.elements[attr] = new StringValue(valList[iter]) ;
         }
         iter++ ;
     }
