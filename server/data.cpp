@@ -26,12 +26,12 @@ TableData::TableData(string pathname) {
     this->retrieve(pathname);
 }
 
-int main() {
-    TableData* td = new TableData("db/b/people");
-    for (Record rec: td->recordList) {
-        for (pair<string, Value*> map_elem: rec.elements) {
-            cout << map_elem.first << ": ";
-            map_elem.second->print(); cout << '\n';
-        }
-    }
-}
+// int main() {
+//     TableData* td = new TableData("db/b/people");
+//     for (Record* rec: td->recordList) {
+//         for (pair<string, Value*> map_elem: rec->elements) {
+//             cout << map_elem.first << ": ";
+//             map_elem.second->print(); cout << '\n';
+//         }
+//     }
+// }

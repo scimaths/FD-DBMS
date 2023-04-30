@@ -16,7 +16,7 @@ class TableData {
     public:
 
     TableMetadata* tableMetadata ;
-    vector<Record> recordList ;
+    vector<Record*> recordList ;
     string table_path;
 
     TableData(string pathname);

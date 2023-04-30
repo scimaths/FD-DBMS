@@ -89,20 +89,20 @@ bool TableMetadata::check_val(vector<string> valList) {
     return true ;
 }
 
-Record TableMetadata::create_record(vector<string> valList) {
-    Record record ;
+Record* TableMetadata::create_record(vector<string> valList) {
+    Record* record = new Record();
     int iter = 0 ;
     for (string attr: attrList) {
         if(attrType[attr] == "INT") {
-            record.elements[attr] = new IntValue(stoi(valList[iter])) ;
+            record->elements[attr] = new IntValue(stoi(valList[iter])) ;
         }
         else if(attrType[attr] == "FLOAT") {
-            record.elements[attr] = new FloatValue(stof(valList[iter])) ;
+            record->elements[attr] = new FloatValue(stof(valList[iter])) ;
         }
         else if(attrType[attr] == "STRING") {
-            record.elements[attr] = new StringValue(valList[iter]) ;
+            record->elements[attr] = new StringValue(valList[iter]) ;
         }
         iter++ ;
     }
-    return record ;
+    return record;
 }

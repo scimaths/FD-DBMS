@@ -16,7 +16,7 @@ class Expression {
     Expression *left_child, *right_child;
 
     Expression(vector<string> tokens);
-    Value* evaluate(Record& rec);
+    Value* evaluate(Record* rec);
 };
 
 class Comparison {
@@ -26,7 +26,7 @@ class Comparison {
     Expression *left_expr, *right_expr;
 
     Comparison(vector<string> tokens);
-    bool evaluate(Record& rec);
+    bool evaluate(Record* rec);
 };
 
 void dump(Expression* expression, int depth);

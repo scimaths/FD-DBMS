@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <iostream>
 #include "query.h"
+#include "data.h"
 #include "arithmetic_expr.h"
 
 using namespace std;
@@ -25,6 +26,20 @@ class Filter {
 };
 
 /*
+(SELECT (attributes) FROM ...)
+    JOIN
+(SELECT (attributes) FROM ...)
+    ON (filters)
+*/
+class Join {
+    public:
+    SelectQuery *left_query, *right_query;
+    map<string, Expression*> attributes;
+    vector<Filter*> filters;
+    string join_type;
+};
+
+/*
 SELECT (attributes)
     FROM (table/subquery)
     WHERE (filters)
@@ -33,11 +48,16 @@ SELECT (attributes)
 */
 class SelectQuery : public Query {
     public:
-    SelectQuery* from_query;
+    SelectQuery* subquery;
+    Join* join;
     vector<Filter*> filters;
-    vector<Type> result_format;
+    map<string, Expression*> attributes;
 
-    vector<Record> fetch();
+    string atomic_query_db; // For atomic query
+    string atomic_query_table; // For atomic query
+
+    SelectQuery(string db, string table);
+    vector<Record*> fetch();
 };
 
 vector<string> filter_tokenize(string str_query);

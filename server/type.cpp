@@ -20,13 +20,13 @@ IntValue::IntValue(int num) {
     this->type = 0;
 }
 
-StringValue::StringValue(string str) {
-    this->str = str;
+FloatValue::FloatValue(float num) {
+    this->num = num;
     this->type = 1;
 }
 
-FloatValue::FloatValue(float num) {
-    this->num = num;
+StringValue::StringValue(string str) {
+    this->str = str;
     this->type = 2;
 }
 

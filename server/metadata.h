@@ -20,7 +20,7 @@ class TableMetadata {
     void dump(string pathname) ;
     void retrieve(string pathname) ;
     bool check_val(vector<string> valList) ; // check if valList satisfy attrType constraints
-    Record create_record(vector<string> valList) ;
+    Record* create_record(vector<string> valList) ;
 } ;
 
 class DatabaseMetadata {

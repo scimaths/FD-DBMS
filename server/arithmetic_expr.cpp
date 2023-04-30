@@ -35,8 +35,72 @@ Expression::Expression(vector<string> tokens) {
     }
 }
 
-Value* Expression::evaluate(Record& record) {
+Value* Expression::evaluate(Record* record) {
+    Value* result;
+    // Both children present
+    if (this->left_child != NULL && this->right_child != NULL) {
+        // Evaluate both the children
+        Value *left_val = this->left_child->evaluate(record);
+        Value *right_val = this->right_child->evaluate(record);
 
+        // String concatenation
+        if (expr_op == ":") {
+            if (left_val->type != 2 || right_val->type != 2) {
+                cerr << "Incorrect types for concat\n";
+                return NULL;
+            }
+            string concat = ((StringValue*)left_val)->str + ((StringValue*)right_val)->str;
+            result = (Value*)(new StringValue(concat));
+        }
+        else {
+            // Numerical operations with strings - ERROR
+            if (left_val->type == 2 || right_val->type == 2) {
+                cerr << "Incorrect types for " << expr_op << '\n';
+                return NULL;
+            }
+
+            // Get left and right numbers as floats
+            float left_num, right_num;
+            if (left_val->type == 0) {left_num = ((IntValue*)left_val)->num;}
+            else if (left_val->type == 1) {left_num = ((FloatValue*)left_val)->num;}
+            if (right_val->type == 0) {right_num = ((IntValue*)right_val)->num;}
+            else if (right_val->type == 1) {right_num = ((FloatValue*)right_val)->num;}
+
+            // For division, result is always float & check division by 0
+            if (expr_op == "/") {
+                if (right_num == 0) {
+                    cerr << "Division by zero error\n";
+                    return NULL;
+                }
+                result = (Value*)(new FloatValue(left_num/right_num));
+            }
+            else {
+                float result_num;
+                if (expr_op == "*") {result_num = left_num * right_num;}
+                else if (expr_op == "+") {result_num = left_num + right_num;}
+                else if (expr_op == "-") {result_num = left_num - right_num;}
+
+                // For +-*, if both are INTs, return is also an INT
+                if (left_val->type == 0 && right_val->type == 0) {
+                    result = (Value*)(new IntValue(result_num));
+                }
+                // One argument is FLOAT, return is a FLOAT
+                else {
+                    result = (Value*)(new FloatValue(result_num));
+                }
+            }
+        }
+    }
+    // One child is not null, not both
+    else if (this->left_child != NULL || this->right_child != NULL) {
+        cerr << "Ill-formed expression";
+        return NULL;
+    }
+    // Atomic expression (fetch record column directly)
+    else {
+        result = record->elements[atomic_expr_str];
+    }
+    return result;
 }
 
 // Print expression tree for visualization and verification
@@ -78,7 +142,7 @@ Comparison::Comparison(vector<string> tokens) {
     this->right_expr = new Expression(right_tokens);
 }
 
-bool Comparison::evaluate(Record& record) {
+bool Comparison::evaluate(Record* record) {
     
 }
 
@@ -92,4 +156,38 @@ void dump(Comparison* comparison, int depth) {
     // Dump for child expressions
     dump(comparison->left_expr, depth + 1);
     dump(comparison->right_expr, depth + 1);
+}
+
+void test_arithmetic_expr() {
+    Record* rec_1 = new Record();
+    rec_1->elements["num_1"] = new IntValue(3);
+    rec_1->elements["num_2"] = new FloatValue(5);
+    rec_1->elements["str_1"] = new StringValue("alpha");
+    rec_1->elements["str_2"] = new StringValue("beta");
+
+    Expression* expr; 
+    vector<string> tokens;
+    Value* result_val;
+
+    // Test 1 - INT + INT
+    tokens = vector<string>({"(", "num_1", "+", "num_2", ")"});
+    expr = new Expression(tokens);
+    result_val = (expr->evaluate(rec_1));
+    if (result_val != NULL) {result_val->print(); cout << '\n';}
+
+    // Test 2 - STRING : STRING
+    tokens = vector<string>({"(", "str_1", ":", "str_2", ")"});
+    expr = new Expression(tokens);
+    result_val = (expr->evaluate(rec_1));
+    if (result_val != NULL) {result_val->print(); cout << '\n';}
+
+    // Test 3 - STRING + INT
+    tokens = vector<string>({"(", "str_1", "+", "num_1", ")"});
+    expr = new Expression(tokens);
+    result_val = (expr->evaluate(rec_1));
+    if (result_val != NULL) {result_val->print(); cout << '\n';}
+}
+
+int main() {
+    test_arithmetic_expr();
 }

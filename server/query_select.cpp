@@ -153,9 +153,44 @@ void dump(Filter* filter, int depth) {
     }
 }
 
-// TODO - Implement fetch with filters
-vector<Record> SelectQuery::fetch() {
-    
+// Initializing atomic subquery
+SelectQuery::SelectQuery(string db, string table) {
+    this->atomic_query_db = db;
+    this->atomic_query_table = table;
+}
+
+// TODO - Deal with JOIN
+vector<Record*> SelectQuery::fetch() {
+    vector<Record*> recordList;
+    if (this->subquery == NULL && this->join == NULL) {
+        TableData td = TableData("db/" + this->atomic_query_db + "/" + this->atomic_query_table);
+        recordList = td.recordList;
+    }
+    else if (this->join == NULL) {
+        recordList = this->subquery->fetch();
+    }
+    else if (this->subquery == NULL) {
+        // TODO
+    }
+
+    vector<Record*> result;
+    for (Record* rec: recordList) {
+        bool valid = true;
+        for (Filter* filter: this->filters) {
+            // Found a filter where mismatch occurs
+            if (!filter->check(rec)) {
+                valid = false;
+                break;
+            }
+        }
+        
+        Record* result_rec = new Record();
+        for (pair<string, Expression*> attr_exp: this->attributes) {
+            result_rec->elements[attr_exp.first] = (attr_exp.second)->evaluate(rec);
+        }
+        result.push_back(result_rec);
+    }
+    return result;
 }
 
 // int main() {
