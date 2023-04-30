@@ -34,6 +34,15 @@ void IntValue::print() {cout << this->num;}
 void StringValue::print() {cout << this->str;}
 void FloatValue::print() {cout << this->num;}
 
+string lower(string str) {
+    string result = "";
+    for (char c: str) {
+        if (c >= 'A' && c <= 'Z') {result += 'a' + (c - 'A');}
+        else {result += c;}
+    }
+    return result;
+}
+
 vector<string> strip_brackets_from_tokens(vector<string> tokens) {
     // Remove surrounding brackets
     stack<int> st;

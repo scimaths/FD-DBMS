@@ -2,6 +2,7 @@
 #define QUERY_SELECT_HEADER
 
 #include <string>
+#include <cstring>
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -24,6 +25,8 @@ class Filter {
     Filter(vector<string> tokens);
     bool check(Record* rec);
 };
+
+class SelectQuery;
 
 /*
 (SELECT (attributes) FROM ...)

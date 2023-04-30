@@ -21,6 +21,25 @@ class Expression {
     Value* evaluate(Record* rec);
 };
 
+class GroupedExpression {
+    public:
+    vector<string> tokens;
+
+    // For arithmetic expressions on grouped results
+    string expr_op;
+    GroupedExpression *left_child, *right_child;
+
+    // For calls to usual expressions on groups
+    string func_name;
+    Expression *aggregate_expr;
+
+    // For atomic calls (like key to group)
+    string atomic_expr_str;
+
+    GroupedExpression(vector<string> tokens);
+    Value* evaluate(GroupedRecord* rec);
+};
+
 class Comparison {
     public:
     vector<string> tokens;
@@ -31,6 +50,9 @@ class Comparison {
     bool evaluate(Record* rec);
 };
 
+Value* combine_values_binary(Value* left_val, Value* right_val, string expr_op);
+Value* compute_aggregate(vector<Value*> values, string agg_func);
+Value* combine_possibly_null_values(Value* val_1, Value* val_2, string expr_op);
 void dump(Expression* expression, int depth);
 void dump(Comparison* comparison, int depth);
 #endif

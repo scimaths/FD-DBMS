@@ -7,17 +7,35 @@ vector<string> filter_tokenize(string str_query) {
     string token = "";
 
     for (int i=0; i<(int)str_query.size(); ++i) {
-        // Look for parentheses symbols - () or operation tokens - +-*/:
-        if (
+        // Look for function start token [
+        if (str_query[i] == '[') {
+            if (token.size() == 0) {
+                cerr << "Incorrect query format - no function specified before [\n";
+                return vector<string>();
+            }
+            else if (find(aggregate_functions.begin(), aggregate_functions.end(), lower(token)) == aggregate_functions.end()) {
+                cerr << "Unidentified aggregate function " << token << '\n';
+                return vector<string>();
+            }
+            else {
+                token = "[" + token;
+                tokens.push_back(token);
+                token = "";
+            }
+        }
+        // Look for parentheses symbols - () or operation tokens - +-*/: or function end token ]
+        else if (
             find(brkt_tokens.begin(), brkt_tokens.end(), str_query[i]) != brkt_tokens.end()
             ||
             find(op_tokens.begin(), op_tokens.end(), string(1, str_query[i])) != op_tokens.end()
+            ||
+            str_query[i] == ']'
         ) {
             // Push previous token
             if (token.size() > 0) {
                 tokens.push_back(token);
             }
-            // Add ()+-*/:
+            // Add ()+-*/:]
             token = string(1, str_query[i]);
             tokens.push_back(token);
             // Empty current token
@@ -117,12 +135,17 @@ Filter::Filter(vector<string> tokens) {
 // Tokenize string to tokens and pass to Filter(tokens) function
 Filter::Filter(string str_rep) : Filter(filter_tokenize(str_rep)) {}
 
-// TODO - Check for atomic filters
+// Filter check function (comparison & expression manipulations handled within)
 bool Filter::check(Record* rec) {
     if (!this->right_child && !this->left_child) {
-        // TODO
+        return this->atomic_filter->evaluate(rec);
+    }
+    // Exactly one child null, not possible
+    else if (!this->right_child || !this->left_child) {
+        cerr << "Ill-formed filter\n";
         return false;
     }
+    // Check ||, && for child conditions
     else {
         if (this->prod_sum == 0) {
             return this->right_child->check(rec) && this->left_child->check(rec);
@@ -193,7 +216,7 @@ vector<Record*> SelectQuery::fetch() {
     return result;
 }
 
-// int main() {
-//     Filter* filter = new Filter("(a.b=3 && c.d+e.f-k><4) || (l.m*k >= 2 || (n != 4)) && x.y <= 3");
-//     dump(filter, 0);
-// }
+int main() {
+    Filter* filter = new Filter("(a.b=3 && sum[c.d+e.f-k]><4) || (l.m*k >= 2 || (n != 4)) && x.y <= 3");
+    dump(filter, 0);
+}
