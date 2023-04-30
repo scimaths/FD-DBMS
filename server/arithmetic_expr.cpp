@@ -35,6 +35,7 @@ Expression::Expression(vector<string> tokens) {
     }
 }
 
+// Evaluate expression trees recursively for +-*/:
 Value* Expression::evaluate(Record* record) {
     Value* result;
     // Both children present
@@ -142,8 +143,78 @@ Comparison::Comparison(vector<string> tokens) {
     this->right_expr = new Expression(right_tokens);
 }
 
+// Evaluate a comparison
 bool Comparison::evaluate(Record* record) {
-    
+    Value* left_val = this->left_expr->evaluate(record);
+    Value* right_val = this->right_expr->evaluate(record);
+
+    // Check equality/inequality for strings
+    if (
+        (filter_op == "!=" || filter_op == "=")
+        &&
+        left_val->type == 2 && right_val->type == 2
+    ) {
+        string left_str = ((StringValue*)left_val)->str;
+        string right_str = ((StringValue*)right_val)->str;
+        if (filter_op == "=") {
+            return left_str == right_str;
+        }
+        else if (filter_op == "!=") {
+            return left_str != right_str;
+        }
+    }
+    // >< - LIKE operator for regex matching with strings
+    else if (filter_op == "><") {
+        // Check if arguments are strings
+        if (left_val->type != 2 || right_val->type != 2) {
+            cerr << "Illegal comparison - >< requires two strings\n";
+            return 0;
+        }
+        else {
+            regex regex_cmp(((StringValue*)right_val)->str);
+            return regex_match(
+                ((StringValue*)left_val)->str,
+                regex_cmp
+            );
+        }
+    }
+    // One string but all string operators used already
+    else if (left_val->type == 2 || right_val->type == 2) {
+        cerr << "Illegal comparison - Only = != >< available for string comparison\n";
+        return 0;
+    }
+    else {
+        // Get left and right numbers as floats
+        float left_num, right_num;
+        if (left_val->type == 0) {left_num = ((IntValue*)left_val)->num;}
+        else if (left_val->type == 1) {left_num = ((FloatValue*)left_val)->num;}
+        if (right_val->type == 0) {right_num = ((IntValue*)right_val)->num;}
+        else if (right_val->type == 1) {right_num = ((FloatValue*)right_val)->num;}
+
+        // Add individual comparison operators
+        if (filter_op == "<=") {
+            return left_num <= right_num;
+        }
+        else if (filter_op == "<") {
+            return left_num < right_num;
+        }
+        else if (filter_op == ">=") {
+            return left_num >= right_num;
+        }
+        else if (filter_op == ">") {
+            return left_num > right_num;
+        }
+        else if (filter_op == "=") {
+            return fabs(left_num - right_num) < MIN_DIFF;
+        }
+        else if (filter_op == "!=") {
+            return fabs(left_num - right_num) > MIN_DIFF;
+        }
+        else {
+            cerr << "Unidentified comparison operator\n";
+            return false;
+        }
+    }
 }
 
 // Print comparison tree (depth = 1)
@@ -188,6 +259,39 @@ void test_arithmetic_expr() {
     if (result_val != NULL) {result_val->print(); cout << '\n';}
 }
 
+void test_comparison_expr() {
+    Record* rec_1 = new Record();
+    rec_1->elements["num_1"] = new IntValue(3);
+    rec_1->elements["num_2"] = new FloatValue(5);
+    rec_1->elements["str_1"] = new StringValue("alpha");
+    rec_1->elements["str_2"] = new StringValue("beta");
+    rec_1->elements["str_3"] = new StringValue("alphabeta");
+    rec_1->elements["str_4"] = new StringValue("(.*)abe(.*)");
+
+    Comparison* cmpr; 
+    vector<string> tokens;
+    bool result_val;
+
+    // Test 1 - Int < Int
+    tokens = vector<string>({"num_1", "+", "num_2", "<", "num_1", "-", "num_2"});
+    cmpr = new Comparison(tokens);
+    for (string token: tokens) {cout << token << " ";}
+    cout << "----- " << (cmpr->evaluate(rec_1)) << '\n';
+
+    // Test 2 - String = String
+    tokens = vector<string>({"str_1", ":", "str_2", "=", "str_3"});
+    cmpr = new Comparison(tokens);
+    for (string token: tokens) {cout << token << " ";}
+    cout << "----- " << (cmpr->evaluate(rec_1)) << '\n';
+
+    // Test 3 - String >< String
+    tokens = vector<string>({"str_1", ":", "str_2", "><", "str_4"});
+    cmpr = new Comparison(tokens);
+    for (string token: tokens) {cout << token << " ";}
+    cout << "----- " << (cmpr->evaluate(rec_1)) << '\n';
+}
+
 int main() {
     test_arithmetic_expr();
+    test_comparison_expr();
 }

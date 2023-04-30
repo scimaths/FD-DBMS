@@ -1,4 +1,5 @@
 __pycache__/
 .vscode/
 server/*.out
+server/*.exe
 server/*.gch

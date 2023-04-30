@@ -2,6 +2,8 @@
 #define ARITHMETIC_EXPRESSION_HEADER
 
 #include <string>
+#include <regex>
+#include <cmath>
 #include <vector>
 #include <iostream>
 #include "type.h"

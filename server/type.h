@@ -63,4 +63,5 @@ const vector<char> cmp_char{'<', '>', '!', '='};
 const vector<string> cmp_tokens{"<=", ">=", "!=", "><", "<", ">", "="};
 const vector<string> or_and_tokens{"||", "&&"};
 const vector<string> op_tokens{"+", "-", "/", "*", ":"};
+const float MIN_DIFF = 1e-9;
 #endif
