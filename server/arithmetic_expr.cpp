@@ -109,7 +109,6 @@ Value* combine_possibly_null_values(Value* val_1, Value* val_2, string expr_op) 
     }
     // Combine for non-null inputs
     else {
-        if (val_1->type == 2 || val_2->type == 2) {return NULL;}
         if (expr_op == "sum") {expr_op = "+";}
         return combine_values_binary(val_1, val_2, expr_op);
     }
@@ -304,6 +303,7 @@ GroupedExpression::GroupedExpression(vector<string> tokens) {
     }
 }
 
+// Evaluate grouped expression for grouped records - recursively call grouped expressions or expressions
 Value* GroupedExpression::evaluate(GroupedRecord* grouped_record) {
     Value* result;
     
@@ -318,7 +318,7 @@ Value* GroupedExpression::evaluate(GroupedRecord* grouped_record) {
     // Exactly one child present - ill formed group expression
     else if (this->left_child != NULL || this->right_child != NULL) {
         cerr << "Ill-formed group expression\n";
-        return NULL;
+        result = NULL;
     }
     // Aggregation present
     else if (this->aggregate_expr != NULL) {
@@ -342,18 +342,44 @@ Value* GroupedExpression::evaluate(GroupedRecord* grouped_record) {
         }
 
         // Compute aggregated value
-        Value* aggregated = compute_aggregate(indiv_values, this->func_name);
+        result = compute_aggregate(indiv_values, this->func_name);
     }
     // No aggregation, atomic grouped expression - one of the keys
     else if (this->aggregate_expr == NULL) {
         // Key not found
         if (grouped_record->group_keys.find(this->atomic_expr_str) == (grouped_record->group_keys).end()) {
             cerr << "Incorrect key value for GROUP BY\n";
-            return NULL;
+            result = NULL;
         }
         else {
-            return grouped_record->group_keys[this->atomic_expr_str];
+            result = grouped_record->group_keys[this->atomic_expr_str];
         }
+    }
+    return result;
+}
+
+void dump(GroupedExpression* grouped_expr, int depth) {
+    // Base case (null-ptr)
+    if (grouped_expr == NULL) {return;}
+    
+    // Dump for GROUPED_EXPRESSION
+    cout << "Depth - " << depth << '\n';
+    cout << "Grouped Expression - ";
+    for (string token: grouped_expr->tokens) {cout << token << " ";}
+    if (grouped_expr->left_child != NULL) {
+        cout << '\n';
+        // Recursive dump for children
+        dump(grouped_expr->left_child, depth + 1);
+        dump(grouped_expr->right_child, depth + 1);
+    }
+    else if (grouped_expr->aggregate_expr != NULL) {
+        cout << "FUNCTION " << grouped_expr->func_name << '\n';
+        // Recursive dump for expression
+        dump(grouped_expr->aggregate_expr, depth + 1);
+    }
+    else {
+        cout << "ATOMIC\n";
+        return;
     }
 }
 
@@ -479,18 +505,21 @@ void test_arithmetic_expr() {
     Value* result_val;
 
     // Test 1 - INT + INT
+    cout << "Arithmetic TEST 1 - ";
     tokens = vector<string>({"(", "num_1", "+", "num_2", ")"});
     expr = new Expression(tokens);
     result_val = (expr->evaluate(rec_1));
     if (result_val != NULL) {result_val->print(); cout << '\n';}
 
     // Test 2 - STRING : STRING
+    cout << "Arithmetic TEST 2 - ";
     tokens = vector<string>({"(", "str_1", ":", "str_2", ")"});
     expr = new Expression(tokens);
     result_val = (expr->evaluate(rec_1));
     if (result_val != NULL) {result_val->print(); cout << '\n';}
 
     // Test 3 - STRING + INT
+    cout << "Arithmetic TEST 3 - ";
     tokens = vector<string>({"(", "str_1", "+", "num_1", ")"});
     expr = new Expression(tokens);
     result_val = (expr->evaluate(rec_1));
@@ -511,25 +540,77 @@ void test_comparison_expr() {
     bool result_val;
 
     // Test 1 - Int < Int
+    cout << "Comparison TEST 1 - ";
     tokens = vector<string>({"num_1", "+", "num_2", "<", "num_1", "-", "num_2"});
     cmpr = new Comparison(tokens);
     for (string token: tokens) {cout << token << " ";}
     cout << "----- " << (cmpr->evaluate(rec_1)) << '\n';
 
     // Test 2 - String = String
+    cout << "Comparison TEST 2 - ";
     tokens = vector<string>({"str_1", ":", "str_2", "=", "str_3"});
     cmpr = new Comparison(tokens);
     for (string token: tokens) {cout << token << " ";}
     cout << "----- " << (cmpr->evaluate(rec_1)) << '\n';
 
     // Test 3 - String >< String
+    cout << "Comparison TEST 3 - ";
     tokens = vector<string>({"str_1", ":", "str_2", "><", "str_4"});
     cmpr = new Comparison(tokens);
     for (string token: tokens) {cout << token << " ";}
     cout << "----- " << (cmpr->evaluate(rec_1)) << '\n';
 }
 
+void test_grouped_expr() {
+    Record* rec_1 = new Record();
+    rec_1->elements["num_1"] = new IntValue(94);
+    rec_1->elements["num_2"] = new FloatValue(5);
+    rec_1->elements["str_1"] = new StringValue("alpha");
+    rec_1->elements["str_2"] = new StringValue("beta");
+
+    Record* rec_2 = new Record();
+    rec_2->elements["num_1"] = new IntValue(126);
+    rec_2->elements["num_2"] = new FloatValue(6);
+    rec_2->elements["str_1"] = new StringValue("gamma");
+    rec_2->elements["str_2"] = new StringValue("delta");
+
+    GroupedRecord* group_rec = new GroupedRecord();
+    group_rec->group_value_attributes = vector<string>({"num_1", "num_2", "str_1", "str_2"});
+    group_rec->group_keys["key_1"] = new StringValue("epsilon");
+    group_rec->group_keys["key_2"] = new FloatValue(30);
+    group_rec->group_value_records = vector<Record*>({rec_1, rec_2});
+
+    GroupedExpression* expr; 
+    vector<string> tokens;
+    Value* result_val;
+
+    // Test 1 - sum(float) - float
+    cout << "Grouped TEST 1 - ";
+    tokens = vector<string>({"[sum", "num_1", "+", "num_2", "]", "-", "key_2"});
+    expr = new GroupedExpression(tokens);
+    for (string token: tokens) {cout << token << " ";} cout << "----- ";
+    result_val = (expr->evaluate(group_rec));
+    if (result_val != NULL) {result_val->print(); cout << '\n';}
+
+    // Test 2 - max(string:string):string
+    cout << "Grouped TEST 2 - ";
+    tokens = vector<string>({"[max", "str_1", ":", "str_2", "]", ":", "key_1"});
+    expr = new GroupedExpression(tokens);
+    for (string token: tokens) {cout << token << " ";} cout << "----- ";
+    result_val = (expr->evaluate(group_rec));
+    if (result_val != NULL) {result_val->print(); cout << '\n';}
+
+    // Test 3 - count(string:string) + max(num_1-num_2*key_2)
+    cout << "Grouped TEST 3 - ";
+    tokens = vector<string>({"[count", "str_1", ":", "key_1", "]", "+", "[max", "num_1", "-", "num_2", "*", "key_2", "]"});
+    expr = new GroupedExpression(tokens);
+    for (string token: tokens) {cout << token << " ";} cout << "----- ";
+    result_val = (expr->evaluate(group_rec));
+    if (result_val != NULL) {result_val->print(); cout << '\n';}
+}
+
 // int main() {
 //     test_arithmetic_expr();
 //     test_comparison_expr();
+//     test_grouped_expr();
 // }

@@ -216,7 +216,7 @@ vector<Record*> SelectQuery::fetch() {
     return result;
 }
 
-int main() {
-    Filter* filter = new Filter("(a.b=3 && sum[c.d+e.f-k]><4) || (l.m*k >= 2 || (n != 4)) && x.y <= 3");
-    dump(filter, 0);
-}
+// int main() {
+//     Filter* filter = new Filter("(a.b=3 && sum[c.d+e.f-k]><4) || (l.m*k >= 2 || (n != 4)) && x.y <= 3");
+//     dump(filter, 0);
+// }
