@@ -131,7 +131,6 @@ int main(int argc, char const* argv[]) {
                 }
                 else {
                     // Handle communication from an existing connection
-                    s
                 }
             }
         }
