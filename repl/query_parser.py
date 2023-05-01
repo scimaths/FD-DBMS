@@ -45,7 +45,7 @@ class QueryParser:
             print("Invalid Query")
             return
         
-        self.query_handle(words, depth)
+        _, parsed_query = self.query_handle(words, depth)
         pass
     
     # def new_temp(self):
@@ -53,7 +53,7 @@ class QueryParser:
     #     return "temp"+str(QueryParser.temp_count)
     
     
-    def query_handle(self, words, depth):
+    def query_handle(self, words, depth, label="select"):
         
 
         # Define the list of keywords and clauses
@@ -77,7 +77,22 @@ class QueryParser:
             word = words[i]
             next_word = words[i+1] if i+1 < len(words) else ""
 
-            
+            if word=="(":
+                current_depth = depth+1
+                k = i+1
+                while k<len(words):
+                    if words[k]=="(":
+                        current_depth+=1
+                    if words[k]==")":
+                        current_depth-=1
+                    k+=1
+                    if current_depth==depth:
+                        break
+                k, parsed_subquery = self.query_handle(words[i+1:k-1], depth+1,"select")
+                i +=k+2
+                if words[i] == "JOIN":
+                    from_db.append(parsed_subquery)
+                word = words[i]
             if word in self.keywords:
                 if word == "SELECT":
                     j = i + 1
@@ -131,11 +146,11 @@ class QueryParser:
                                     break
                                 k+=1
                             print("DEPTH increasing to", depth+1)
-                            i, parsed_subquery = self.query_handle(words[j+1:k], depth+1 )
+                            i, parsed_subquery = self.query_handle(words[j+1:k], depth+1, "from" )
                             j = i+j+2
                             from_db.append(parsed_subquery)
                             print("DEPTH restored to", depth,"\n")
-                        if words[j] in self.keywords:
+                        if j>=len(words) or words[j] in self.keywords:
                             break
                         from_db.append(words[j])
                         j += 1
@@ -153,20 +168,37 @@ class QueryParser:
 
                 elif word in ["OUTER", "INNER","FULL", "NATURAL"] or word=="JOIN":
                     if(word=="JOIN"):
-                        join_type = "NORMAL"
+                        join_type = ""
                         i+=1
                     else:
-                        join_type = word
+                        join_type = word+" "
                         i += 2
-                    table_name = words[i]
+                    if words[i]=="(":
+                        current_depth = depth+1
+                        k = i+1
+                        while k<len(words):
+                            if words[k]=="(":
+                                current_depth+=1
+                            if words[k]==")":
+                                current_depth-=1
+                            k+=1
+                            if current_depth==depth:
+                                break
+                        k, parsed_subquery = self.query_handle(words[i+1:k-1], depth+1, "select" )
+                        i +=k+1
+                        table_name = (parsed_subquery)
+                        word = words[i]
+                        print(i, word)
+                    else:
+                        table_name = words[i]
                     conditions = ""
                     if words[i+1] == "ON" or words[i+1]=="USING":
                         conditions += words[i+2]
                         i += 2
                     if len(join_conditions):
-                        join_conditions[0] = ("JOIN "+ join_type + " {"+ table_name +"} {"+join_conditions[-1] +"} {" +conditions +"}")
+                        join_conditions[0] = ("JOIN "+ join_type + "{"+ table_name +"} {"+join_conditions[-1] +"} {" +conditions +"}")
                     else: 
-                        join_conditions.append("JOIN "+ join_type + " {"+ table_name +"} {"+from_db[-1] +"} {"+conditions+"}" )
+                        join_conditions.append("JOIN "+ join_type + "{"+ table_name +"} {"+from_db[-1] +"} {"+conditions+"}" )
 
 
                 elif word == "GROUP" and next_word=="BY":
@@ -190,14 +222,17 @@ class QueryParser:
 
             i += 1
         parsed_query = ""
-        parsed_query+="SELECT {"+",".join(select_attr)+"} AS {"+",".join(select_as_attr)+"} "
-        if len(join_conditions):
-            parsed_query+="FROM {"+",".join(join_conditions)+"} "
-        else:
-            parsed_query+="FROM {"+",".join(from_db)+"} "
-        parsed_query+="WHERE {"+" ".join(filter_conditions)+"} "
-        parsed_query+="GROUP BY {"+",".join(group_by_items)+"} "
-        parsed_query+="HAVING {"+" ".join(having_conditions)+"}"
+        if label=="select":
+            parsed_query+="SELECT {"+",".join(select_attr)+"} AS {"+",".join(select_as_attr)+"} "
+            if len(join_conditions):
+                parsed_query+="FROM {"+",".join(join_conditions)+"} "
+            else:
+                parsed_query+="FROM {"+",".join(from_db)+"} "
+            parsed_query+="WHERE {"+" ".join(filter_conditions)+"} "
+            parsed_query+="GROUP BY {"+",".join(group_by_items)+"} "
+            parsed_query+="HAVING {"+" ".join(having_conditions)+"}"
+        elif label=="from":
+            parsed_query+=",".join(join_conditions)
             
         print(parsed_query)
         # print(select_attr,"\n", from_db,"\n",  join_conditions,"\n",  filter_conditions,"\n",   group_by_items,"\n", having_conditions, "\n" )
@@ -207,6 +242,6 @@ class QueryParser:
 parser = QueryParser()
 # query = input()
 # query = 'select frif as f from (select abcd from hshsh  ) where jfiejf>2'
-query = 'select col1   +   cols, col2 as f from (select col2,col3 from db1  ) inner join b on this_col join c using good_col>0 && bad_col<0 where qwerty>2 && dief<9 group by col1 having col3<3'
+query = 'SELECT id, ref_id, salary - ref_sal FROM ((SELECT id, salary FROM instructor) JOIN (SELECT id as ref_id, salary as ref_salary FROM instructor) ON salary > ref_salary)'
 parser.parse_stmt(query)
 
