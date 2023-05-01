@@ -19,9 +19,7 @@ if __name__ == "__main__":
         while True:
             statement = input("> ")
             parser = QueryParser()
-            # parsed_query = parser.parse_stmt(statement.encode)
-            query = 'SELECT id, ref_id FROM instructor'
-            parsed_query = parser.parse_stmt(query)
+            parsed_query = parser.parse_stmt(statement)
             print(parsed_query)
             s.sendall(parsed_query.encode())
             data = s.recv(1024)

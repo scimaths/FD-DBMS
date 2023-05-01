@@ -25,7 +25,7 @@ class TableQuery : public DatabaseQuery {
 class CreateTableQuery : public TableQuery {
     public:
     vector<string> attrList ;
-    map<string, Type> attrMap ;
+    map<string, string> attrType ;
     vector<string> uniqueList ;
 } ;
 

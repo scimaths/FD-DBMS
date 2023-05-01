@@ -14,7 +14,7 @@ class LocalConstraint {
 
     void dump(string pathname) ;
     void retrieve(string pathname) ;
-    bool check(Record record) ;
+    bool check(Record *record) ;
 };
 
 #endif
