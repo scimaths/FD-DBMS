@@ -1,3 +1,5 @@
+import re
+
 class QueryParser:
     # temp_count = 0
     def __init__(self):
@@ -12,7 +14,7 @@ class QueryParser:
             'CREATE TABLE',
             'FUNCDEP'
         ]
-        self.keywords = ["SELECT", "AS", "FROM", "NATURAL", "INNER", "LEFT", "RIGHT", "FULL", "JOIN", "ON", "WHERE", "GROUP", "BY", "HAVING", "SUM", "AVG", "MEAN", "COUNT", "MIN", "MAX"]
+        self.keywords = ["SELECT", "AS", "FROM", "NATURAL", "OUTER", "INNER", "LEFT", "RIGHT", "FULL", "JOIN", "ON", "USING", "WHERE", "GROUP", "BY", "HAVING", "SUM", "AVG", "MEAN", "COUNT", "MIN", "MAX"]
         self.clauses = ["SELECT", "FROM", "JOIN", "WHERE", "GROUP", "HAVING"]
         self.aggregates = ["SUM", "AVG", "MEAN", "COUNT", "MIN", "MAX"]
 
@@ -21,8 +23,20 @@ class QueryParser:
     
     def parse_stmt(self, stmt):
         
+        stmt = re.sub(r"\s*\+\s*","+", stmt)
+        stmt = re.sub(r"\s*\-\s*","-", stmt)
+        stmt = re.sub(r"\s*\*\s*","*", stmt)
+        stmt = re.sub(r"\s*\/\s*","/", stmt)
+        stmt = re.sub(r"\s*\=\s*","=", stmt)
+        stmt = re.sub(r"\s*\>\s*",">", stmt)
+        stmt = re.sub(r"\s*\<\s*","<", stmt)
+        stmt = re.sub(r"\s*\!\s*","!", stmt)
+        stmt = re.sub(r"\s*\%\s*","%", stmt)
+        stmt = re.sub(r"\s*\&\s*","&", stmt)
+        stmt = re.sub(r"\s*\|\s*","|", stmt)
         stmt = stmt.replace("(", " ( ")
         stmt = stmt.replace(")", " ) ")
+        stmt = stmt.replace(",", " , ")
         words = stmt.split()
         words = [self.upper_case(word)  for word in words]
         print(words,"\n")
@@ -62,13 +76,14 @@ class QueryParser:
         while i < len(words):
             word = words[i]
             next_word = words[i+1] if i+1 < len(words) else ""
-            # print(word)
 
             
             if word in self.keywords:
                 if word == "SELECT":
                     j = i + 1
                     while j < len(words):
+                        if words[j]==",":
+                            j+=1
                         if words[j] in self.aggregates:
                             if words[j+1]=="(":
                                 current_depth = depth+1
@@ -119,8 +134,8 @@ class QueryParser:
                             i, parsed_subquery = self.query_handle(words[j+1:k], depth+1 )
                             j = i+j+2
                             from_db.append(parsed_subquery)
-                            print("DEPTH restored to", depth)
-                        if words[j] in self.clauses:
+                            print("DEPTH restored to", depth,"\n")
+                        if words[j] in self.keywords:
                             break
                         from_db.append(words[j])
                         j += 1
@@ -136,24 +151,22 @@ class QueryParser:
                         j += 1
                     i = j - 1
 
-                elif word in ["INNER", "LEFT", "RIGHT", "FULL", "NATURAL"] or word=="JOIN":
+                elif word in ["OUTER", "INNER","FULL", "NATURAL"] or word=="JOIN":
                     if(word=="JOIN"):
-                        join_type = ""
-                        join_word = word
+                        join_type = "NORMAL"
                         i+=1
                     else:
                         join_type = word
-                        join_word = next_word
                         i += 2
-                        
                     table_name = words[i]
-                    if words[i+1] == "AS":
-                        table_alias = words[i+2]
+                    conditions = ""
+                    if words[i+1] == "ON" or words[i+1]=="USING":
+                        conditions += words[i+2]
                         i += 2
-                    else:
-                        table_alias = ""
-                    from_db.append(table_name)
-                    join_conditions.append((join_type, join_word, table_name, table_alias))
+                    if len(join_conditions):
+                        join_conditions[0] = ("JOIN "+ join_type + " {"+ table_name +"} {"+join_conditions[-1] +"} {" +conditions +"}")
+                    else: 
+                        join_conditions.append("JOIN "+ join_type + " {"+ table_name +"} {"+from_db[-1] +"} {"+conditions+"}" )
 
 
                 elif word == "GROUP" and next_word=="BY":
@@ -177,17 +190,14 @@ class QueryParser:
 
             i += 1
         parsed_query = ""
-        if (len(select_attr)):
-            parsed_query+="SELECT {"+",".join(select_attr)+"} AS {"+",".join(select_as_attr)+"} "
-        if len(from_db):
+        parsed_query+="SELECT {"+",".join(select_attr)+"} AS {"+",".join(select_as_attr)+"} "
+        if len(join_conditions):
+            parsed_query+="FROM {"+",".join(join_conditions)+"} "
+        else:
             parsed_query+="FROM {"+",".join(from_db)+"} "
-        if len(filter_conditions):
-            parsed_query+="WHERE {"+" ".join(filter_conditions)+"} "
-        if len(group_by_items):
-            parsed_query+="GROUP BY {"+",".join(group_by_items)+"} "
-        if len(having_conditions):
-            parsed_query+="HAVING {"+" ".join(having_conditions)+"}"
-            
+        parsed_query+="WHERE {"+" ".join(filter_conditions)+"} "
+        parsed_query+="GROUP BY {"+",".join(group_by_items)+"} "
+        parsed_query+="HAVING {"+" ".join(having_conditions)+"}"
             
         print(parsed_query)
         # print(select_attr,"\n", from_db,"\n",  join_conditions,"\n",  filter_conditions,"\n",   group_by_items,"\n", having_conditions, "\n" )
@@ -197,6 +207,6 @@ class QueryParser:
 parser = QueryParser()
 # query = input()
 # query = 'select frif as f from (select abcd from hshsh  ) where jfiejf>2'
-query = 'select sum(col1) as col1_name from (select col2,col3 from db1  ) where qwerty>2 group by col1 having col3<3'
+query = 'select col1   +   cols, col2 as f from (select col2,col3 from db1  ) inner join b on this_col join c using good_col>0 && bad_col<0 where qwerty>2 && dief<9 group by col1 having col3<3'
 parser.parse_stmt(query)
 
