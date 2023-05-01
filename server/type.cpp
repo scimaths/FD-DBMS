@@ -34,6 +34,10 @@ void IntValue::print() {cout << this->num;}
 void StringValue::print() {cout << this->str;}
 void FloatValue::print() {cout << this->num;}
 
+string IntValue::get_string() {return to_string(this->num);}
+string StringValue::get_string() {return this->str;}
+string FloatValue::get_string() {return to_string(this->num);}
+
 string lower(string str) {
     string result = "";
     for (char c: str) {
@@ -75,6 +79,51 @@ void print_records(vector<Record*> records) {
         }
         cout << '\n';
     }
+}
+
+string stringify_records(vector<Record*> records) {
+    if (records.empty()) {
+        return "Empty Table";
+    }
+    vector<string> keys;
+    vector<int> string_sizes;
+    for (pair<string, Value*> rec_val: records[0]->elements) {
+        keys.push_back(rec_val.first);
+        string_sizes.push_back(rec_val.first.size());
+    }
+    vector<vector<string>> record_strings;
+    for (Record* rec: records) {
+        vector<string> record_string;
+        int index = 0;
+        for (pair<string, Value*> rec_val: rec->elements) {
+            string record_elem = rec_val.second->get_string();
+            record_string.push_back(record_elem);
+            string_sizes[index] = max(string_sizes[index], (int)record_elem.size());
+            index += 1;
+        }
+        record_strings.push_back(record_string);
+    }
+
+    string output = "|";
+    int index = 0;
+    for (auto key: keys) {
+        output += key + string(string_sizes[index] - (int)key.size() + 1, ' ') + "|";
+        index += 1;
+    }
+    int curr_size = output.size();
+    output = string(curr_size, '-') + "\n" + output + "\n" + string(curr_size, '-');
+
+    for (vector<string> record_string: record_strings) {
+        output += "\n";
+        index = 0;
+        output += "|";
+        for (string record_elem: record_string) {
+            output += record_elem + string(string_sizes[index] - (int)record_elem.size() + 1, ' ') + "|";
+            index += 1;
+        }
+    }
+    output += "\n" + string(curr_size, '-');
+    return output;
 }
 
 Value* numerical_str_to_value(string str) {

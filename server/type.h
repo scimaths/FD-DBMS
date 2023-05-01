@@ -23,6 +23,7 @@ class Value {
     int type;
 
     virtual void print() = 0;
+    virtual string get_string() = 0;
 };
 
 class IntValue : public Value {
@@ -31,6 +32,7 @@ class IntValue : public Value {
 
     IntValue(int num);
     void print();
+    string get_string();
 };
 
 class StringValue : public Value {
@@ -40,6 +42,7 @@ class StringValue : public Value {
 
     StringValue(string str);
     void print();
+    string get_string();
 };
 
 class FloatValue : public Value {
@@ -48,6 +51,7 @@ class FloatValue : public Value {
     
     FloatValue(float num);
     void print();
+    string get_string();
 };
 
 class Record {
@@ -66,6 +70,7 @@ string lower(string str);
 string join(vector<string> tokens, string join_str);
 bool is_equal(Value* val_1, Value* val_2);
 void print_records(vector<Record*> records);
+string stringify_records(vector<Record*> records);
 Value* numerical_str_to_value(string str);
 vector<string> strip_brackets_from_tokens(vector<string> tokens) ;
 pair<int, string> separator_expression(vector<string> tokens, vector<string> separator_strs, vector<string> expression_ops) ;
