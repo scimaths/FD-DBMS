@@ -91,13 +91,13 @@ class QueryParser:
                         if words[j]==",":
                             j+=1
                         if words[j] in self.aggregates:
-                            if words[j+1]=="(":
+                            if words[j+1]=="[":
                                 current_depth = depth+1
                                 k = j+2
                                 while k<len(words):
-                                    if words[k]=="(":
+                                    if words[k]=="[":
                                         current_depth+=1
-                                    if words[k]==")":
+                                    if words[k]=="]":
                                         current_depth-=1
                                     k+=1
                                     if current_depth==depth:
@@ -229,3 +229,9 @@ class QueryParser:
     
 
 
+
+parser = QueryParser()
+# query = input()
+# query = 'select frif as f from (select abcd from hshsh  ) where jfiejf>2'
+query = 'SELECT max[id], ref_id, salary - ref_sal FROM ((SELECT id, salary FROM instructor) JOIN (SELECT id as ref_id, salary as ref_salary FROM instructor) ON salary > ref_salary)'
+print(parser.parse_stmt(query))
