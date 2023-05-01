@@ -115,7 +115,6 @@ void process_query(Query *query) {
         if (!tableMetaData.check_val(query->valList)) {
             throw "Values do not satisfy type constraint" ;
         }
-        // Check Unique Constraint
 
         LocalConstraint LocalConstraint ;
         LocalConstraint.retrieve(query->get_tablePath()) ;
@@ -123,6 +122,17 @@ void process_query(Query *query) {
             throw "Values do not satisfy local constraints" ;
         }
         // Global Constraints
+
+        vector<Record*> record_list = TableData(query->get_tablePath()).recordList ;
+        record_list.push_back(tableMetaData.create_record(query->valList)) ;
+
+        GlobalConstraint globalConstraint ;
+        globalConstraint.retrieve(query->get_dbPath()) ;
+        for (auto fundef:globalConstraint.fdList) {
+            if (!fundef.check(record_list)) {
+                throw "Values do not satisfy global constraints" ;
+            }
+        }
 
         string item = "" ;
         for (string val: query->valList) {
@@ -142,9 +152,10 @@ void process_query(Query *query) {
 }
 
 int main() {
-    DatabaseQuery q ;
-    q.db_name = "b" ;
-    q.query_type = "CREATE DATABASE" ;
+    FunDepQuery q ;
+    q.db_name = "univ_db" ;
+    q.query_type = "FUNCDEF" ;
+    q.fd_str = "id|building" ;
     try
     {
         process_query(&q) ;
