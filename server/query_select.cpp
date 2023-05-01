@@ -594,13 +594,17 @@ void test_grouped_filter() {
 void test_select_query() {
     string query; SelectQuery* sel_query;
 
+    query = "SELECT {name,age,weight,new_name} AS {name,age,weight,new_name} FROM {JOIN {people} {SELECT {name} AS {new_name} FROM {people} WHERE {weight>75} GROUPBY {} HAVING {}} {name>new_name}} WHERE {} GROUPBY {} HAVING {}";
+    sel_query = new SelectQuery(query, "b");
+    cout << query << '\n'; print_records(sel_query->fetch()); cout << '\n';
+
     query = "SELECT {name,age+weight} AS {name,sum} FROM {JOIN {people} {SELECT {name} AS {new_name} FROM {people} WHERE {weight>75} GROUPBY {} HAVING {}} {name>new_name}} WHERE {weight>0} GROUPBY {} HAVING {}";
     sel_query = new SelectQuery(query, "b");
-    cout << query << '\n'; print_records(sel_query->fetch());
+    cout << query << '\n'; print_records(sel_query->fetch()); cout << '\n';
 
     query = "SELECT {max[name],weight} AS {max_name,common_weight} FROM {people} WHERE {weight>0} GROUPBY {weight} HAVING {}";
     sel_query = new SelectQuery(query, "b");
-    cout << query << '\n'; print_records(sel_query->fetch());
+    cout << query << '\n'; print_records(sel_query->fetch()); cout << '\n';
 }
 
 // int main() {
