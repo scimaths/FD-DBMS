@@ -83,7 +83,7 @@ class QueryParser:
                         break
                 k, parsed_subquery = self.query_handle(words[i+1:k-1], depth+1,"select")
                 i +=k+2
-                if words[i] == "JOIN":
+                if i>=len(words) or words[i] == "JOIN":
                     from_db.append(parsed_subquery)
                 word = words[i]
             if word in self.keywords:
@@ -139,7 +139,9 @@ class QueryParser:
                                     break
                                 k+=1
                             # print("DEPTH increasing to", depth+1)
+                            print(j+1, k)
                             i, parsed_subquery = self.query_handle(words[j+1:k], depth+1, "from" )
+                            print(parsed_subquery)
                             j = i+j+2
                             from_db.append(parsed_subquery)
                             # print("DEPTH restored to", depth,"\n")
@@ -224,7 +226,14 @@ class QueryParser:
             parsed_query+="GROUPBY {"+",".join(group_by_items)+"} "
             parsed_query+="HAVING {"+" ".join(having_conditions)+"}"
         elif label=="from":
-            parsed_query+=",".join(join_conditions)
+            if len(join_conditions):
+                parsed_query+=",".join(join_conditions)
+            else:
+                parsed_query+="SELECT {"+",".join(select_attr)+"} AS {"+",".join(select_as_attr)+"} "
+                parsed_query+="FROM {"+",".join(from_db)+"} "
+                parsed_query+="WHERE {"+" ".join(filter_conditions)+"} "
+                parsed_query+="GROUPBY {"+",".join(group_by_items)+"} "
+                parsed_query+="HAVING {"+" ".join(having_conditions)+"}"
             
         return i, parsed_query
         
@@ -233,9 +242,9 @@ class QueryParser:
 
 
 # parser = QueryParser()
-# # query = input()
+# query = input()
 # # query = 'select frif as f from (select abcd from hshsh  ) where jfiejf>2'
-# query = 'SELECT max[id], ref_id, salary - ref_sal FROM ((SELECT id, salary FROM instructor) JOIN (SELECT id as ref_id, salary as ref_salary FROM instructor) ON salary > ref_salary)'
+# query = 'select id.1, id.2, salary.1 - salary.2 from((SELECT id, salary FROM instructor) JOIN (SELECT id, salary FROM instructor) ON salary.1 > 0.5*salary.2 && id.1!=id.2) where id.1="knuth'
 # print(parser.parse_stmt(query))
 
 
@@ -243,5 +252,6 @@ class QueryParser:
 '''
 SELECT min[name], department from instructor group by department
 
+select id.1, id.2, salary.1 - salary.2 from((SELECT id, salary FROM instructor) JOIN (SELECT id, salary FROM instructor) ON salary.1 > 0.5*salary.2 && id.1!=id.2) where id.1="knuth"
 
 '''

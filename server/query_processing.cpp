@@ -151,19 +151,19 @@ void process_query(Query *query) {
     
 }
 
-int main() {
-    FunDepQuery q ;
-    q.db_name = "univ_db" ;
-    q.query_type = "FUNCDEF" ;
-    q.fd_str = "id|building" ;
-    try
-    {
-        process_query(&q) ;
-    }
-    catch(string s)
-    {
-        std::cerr << s << '\n';
-    }
+// int main() {
+//     FunDepQuery q ;
+//     q.db_name = "univ_db" ;
+//     q.query_type = "FUNCDEF" ;
+//     q.fd_str = "id|building" ;
+//     try
+//     {
+//         process_query(&q) ;
+//     }
+//     catch(string s)
+//     {
+//         std::cerr << s << '\n';
+//     }
     
     
-}
+// }
