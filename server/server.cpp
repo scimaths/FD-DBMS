@@ -24,8 +24,8 @@ void handle_client(int client_socket) {
         cout<<"Object made"<<endl; 
         string output = stringify_records(sel_query->fetch());
         cout << output << endl<<endl ;
-        // send(client_socket, output.c_str(), strlen(output.c_str()), 0);
-        send(client_socket, "Server received", strlen("Server received"), 0);
+        send(client_socket, output.c_str(), strlen(output.c_str()), 0);
+        // send(client_socket, "Server received", strlen("Server received"), 0);
         memset(buffer, 0, sizeof(buffer));
     }
     std::cout << "Client disconnected" << std::endl;
@@ -37,7 +37,7 @@ int main() {
     int server_socket, client_socket, max_socket, activity, i, valread;
     struct sockaddr_in server_address, client_address;
     fd_set readfds;
-    
+    int one =1;    
 
     memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
@@ -47,6 +47,12 @@ int main() {
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1) {
         std::cerr << "Failed to create socket" << std::endl;
+        return 1;
+    }
+
+    // set the SO_REUSEADDR option on the server socket
+    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) == -1) {
+        std::cerr << "Failed to set socket option" << std::endl;
         return 1;
     }
 
