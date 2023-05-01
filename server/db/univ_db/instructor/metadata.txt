@@ -1,0 +1,6 @@
+5
+__id INT
+id STRING
+name STRING
+salary INT
+department STRING

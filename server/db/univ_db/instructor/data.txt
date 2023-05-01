@@ -1,0 +1,4 @@
+0,planck_max,Max Planck,80000,Physics
+1,bohr_neils,Neils Bohr,70000,Chemistry
+2,aristotle,Aristotle,20000,Philosophy
+3,knuth,Donald Knuth,40000,Computer Science
