@@ -5,10 +5,22 @@ vector<string> filter_tokenize(string str_query) {
     vector<string> tokens;
     
     string token = "";
+    int string_depth = 0;
 
     for (int i=0; i<(int)str_query.size(); ++i) {
         // Look for function start token [
-        if (str_query[i] == '[') {
+        if (string_depth > 0 && str_query[i] != '\"') {
+            token += str_query[i];
+        }
+        else if (str_query[i] == '\"') {
+            string_depth = 1-string_depth;
+            token += "\"";
+            if (string_depth == 0) {
+                tokens.push_back(token);
+                token = "";
+            }
+        }
+        else if (str_query[i] == '[') {
             if (token.size() == 0) {
                 cerr << "Incorrect query format - no function specified before [\n";
                 return vector<string>();
@@ -610,7 +622,7 @@ void test_select_query() {
     sel_query = new SelectQuery(query, "univ_db");
     cout << stringify_records(sel_query->fetch()); cout << '\n';
 
-    query = "SELECT {id.1,id.2,salary.1-salary.2} AS {id_1,id_2,delta_salary} FROM {JOIN {SELECT {id,salary} AS {id,salary} FROM {instructor} WHERE {} GROUPBY {} HAVING {}} {SELECT {id,salary} AS {id,salary} FROM {instructor} WHERE {} GROUPBY {} HAVING {}} {salary.1>0.5*salary.2 && id.1 != id.2}} WHERE {id.1=\"knuth\"} GROUPBY {} HAVING {}";
+    query = "SELECT {id.1,id.2,salary.1-salary.2} AS {id_1,id_2,delta_salary} FROM {JOIN {SELECT {id,salary} AS {id,salary} FROM {instructor} WHERE {} GROUPBY {} HAVING {}} {SELECT {id,salary} AS {id,salary} FROM {instructor} WHERE {} GROUPBY {} HAVING {}} {salary.1>0.5*salary.2 && id.1 != id.2}} WHERE {id.1><\"(.*)max(.*)\"} GROUPBY {} HAVING {}";
     sel_query = new SelectQuery(query, "univ_db");
     cout << stringify_records(sel_query->fetch()); cout << '\n';
 }
