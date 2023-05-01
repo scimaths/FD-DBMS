@@ -24,7 +24,8 @@ bool FuncDependancy::check(vector<Record*>& recordList) {
             lValList.push_back(record->elements[lAttr]->get_string()) ;
         }
         for (string rAttr: rAttrList) {
-            rValList.push_back(record->elements[rAttr]->get_string()) ;
+            if (record->elements.count(rAttr))
+                rValList.push_back(record->elements[rAttr]->get_string()) ;
         }
         if (checkMap.count(lValList)) {
             if (checkMap[lValList] != rValList) {
