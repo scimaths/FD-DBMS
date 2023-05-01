@@ -16,6 +16,7 @@ void TableData::retrieve(string pathname) {
         file.close();
     }
     else {
+        cerr << pathname << " not found" << '\n';
         throw pathname + " not found" ;
     }
 }

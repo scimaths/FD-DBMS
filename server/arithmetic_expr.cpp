@@ -302,7 +302,12 @@ Value* Expression::evaluate(Record* record) {
             result = record->elements[atomic_expr_str];
         }
         else {
-            result = numerical_str_to_value(atomic_expr_str);
+            if (atomic_expr_str[0] == '\"') {
+                result = (Value*)(new StringValue(atomic_expr_str.substr(1, (int)atomic_expr_str.size() - 2)));
+            }
+            else {
+                result = numerical_str_to_value(atomic_expr_str);
+            }
         }
     }
     return result;
