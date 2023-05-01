@@ -6,6 +6,9 @@
 
 using namespace std;
 
+#ifndef METADATA_HEADER
+#define METADATA_HEADER
+
 class TableMetadata {
     public:
     
@@ -26,3 +29,5 @@ class TableMetadata {
 class DatabaseMetadata {
 
 } ;
+
+#endif

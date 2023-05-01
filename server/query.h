@@ -5,6 +5,9 @@
 
 using namespace std;
 
+#ifndef QUERY_FILE_HEADER
+#define QUERY_FILE_HEADER
+
 class Query {
     public:
     string query_type ;
@@ -39,3 +42,4 @@ class FunDepQuery : public DatabaseQuery {
     string fd_str ;
 } ;
 
+#endif
