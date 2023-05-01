@@ -12,8 +12,8 @@ class QueryParser:
             'CREATE TABLE',
             'FUNCDEP'
         ]
-        self.keywords = ["SELECT", "FROM", "NATURAL", "INNER", "LEFT", "RIGHT", "FULL", "JOIN", "ON", "WHERE", "GROUP", "HAVING", "ORDER", "ASC", "DESC", "LIMIT"]
-        self.clauses = ["SELECT", "FROM", "JOIN", "WHERE", "GROUP", "HAVING", "ORDER", "LIMIT"]
+        self.keywords = ["SELECT", "FROM", "NATURAL", "INNER", "LEFT", "RIGHT", "FULL", "JOIN", "ON", "WHERE", "GROUP", "HAVING"]
+        self.clauses = ["SELECT", "FROM", "JOIN", "WHERE", "GROUP", "HAVING"]
 
     def parse_stmt(self, stmt):
         
@@ -49,11 +49,11 @@ class QueryParser:
         join_conditions = []
         group_by_items = []
         having_conditions = []
-        order_by_items = []
-        limit_count = []
 
         i = 0
 
+        
+        
         while i < len(words):
             word = words[i]
             next_word = words[i+1] if i+1 < len(words) else ""
@@ -64,6 +64,22 @@ class QueryParser:
                 if word == "SELECT":
                     j = i + 1
                     while j < len(words):
+                        if words[j]=="(":
+                            current_depth = depth+1
+                            k = j+1
+                            while k<len(words):
+                                if words[k]=="(":
+                                    current_depth+=1
+                                if words[k]==")":
+                                    current_depth-=1
+                                if current_depth==depth:
+                                    break
+                                k+=1
+                            print("DEPTH increasing to", depth+1)
+                            subquery_temp = self.new_temp()
+                            j = self.query_handle(words[j+1:k], depth+1,subquery_temp )+j+2
+                            from_db.append(subquery_temp)
+                            print("DEPTH restored to", depth)
                         if words[j] == "FROM":
                             break
                         select_attr.append(words[j])
@@ -99,7 +115,7 @@ class QueryParser:
                 elif word == "WHERE":
                     j = i + 1
                     while j < len(words):
-                        if words[j] in ["GROUP", "HAVING", "ORDER", "LIMIT"]:
+                        if words[j] in ["GROUP", "HAVING"]:
                             break
                         filter_conditions.append(words[j])
                         j += 1
@@ -128,7 +144,7 @@ class QueryParser:
                 elif word == "GROUP" and next_word=="BY":
                     j = i + 2
                     while j < len(words):
-                        if words[j] in ["HAVING", "ORDER", "LIMIT"]:
+                        if words[j] in ["HAVING"]:
                             break
                         group_by_items.append(words[j])
                         j += 1
@@ -137,37 +153,21 @@ class QueryParser:
                 elif word == "HAVING":
                     j = i + 1
                     while j < len(words):
-                        if words[j] in ["ORDER", "LIMIT"]:
+                        if words[j] in self.keywords:
                             break
                         having_conditions.append(words[j])
                         j += 1
                     i = j - 1
 
-                elif word == "ORDER" and next_word=="BY":
-                    j = i + 2
-                    while j < len(words):
-                        if words[j] == "LIMIT":
-                            break
-                        if j+1 < len(words) and words[j+1] in ["ASC", "DESC"]:
-                            order_by_items.append((words[j], words[j+1]))
-                            j += 2
-                        else:
-                            order_by_items.append((words[j], ""))
-                            j += 1
-                    i = j - 1
-
-                elif word == "LIMIT":
-                    limit_count.append(words[i+1])
-                    i += 1
 
             i += 1
-        print(name, select_attr,"\n", from_db,"\n",  join_conditions,"\n",  filter_conditions,"\n",   group_by_items,"\n", having_conditions, "\n", order_by_items,"\n",  limit_count,"\n" )
+        print(name, select_attr,"\n", from_db,"\n",  join_conditions,"\n",  filter_conditions,"\n",   group_by_items,"\n", having_conditions, "\n" )
         return i
         
     
 parser = QueryParser()
 # query = input()
 # query = 'select frif as f from (select abcd from hshsh  ) where jfiejf>2'
-query = 'select col1 as col1_name from (select col2,col3 from db1  ) where qwerty>2 group by col1 having col3<3 order by cl5 asc limit 5'
+query = 'select sum(col1) as col1_name from (select col2,col3 from db1  ) where qwerty>2 group by col1 having col3<3'
 parser.parse_stmt(query)
 
