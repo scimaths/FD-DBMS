@@ -625,6 +625,10 @@ void test_select_query() {
     query = "SELECT {id.1,id.2,salary.1-salary.2} AS {id_1,id_2,delta_salary} FROM {JOIN {SELECT {id,salary} AS {id,salary} FROM {instructor} WHERE {} GROUPBY {} HAVING {}} {SELECT {id,salary} AS {id,salary} FROM {instructor} WHERE {} GROUPBY {} HAVING {}} {salary.1>0.5*salary.2 && id.1 != id.2}} WHERE {id.1><\"(.*)max(.*)\"} GROUPBY {} HAVING {}";
     sel_query = new SelectQuery(query, "univ_db");
     cout << stringify_records(sel_query->fetch()); cout << '\n';
+
+    query = "SELECT {max[id],department} AS {max[id],dpt} FROM {instructor} WHERE {} GROUPBY {department} HAVING {}";
+    sel_query = new SelectQuery(query, "univ_db");
+    cout << stringify_records(sel_query->fetch()); cout << '\n';
 }
 
 // int main() {

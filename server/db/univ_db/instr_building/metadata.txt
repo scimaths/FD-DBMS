@@ -1,0 +1,4 @@
+3
+__id INT
+id STRING
+building STRING
