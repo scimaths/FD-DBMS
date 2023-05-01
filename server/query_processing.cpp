@@ -8,6 +8,7 @@
 #include "file.h"
 #include "metadata.h"
 #include "local_constraint.h"
+#include "global_constraint.h"
 
 using namespace std;
 
@@ -132,7 +133,9 @@ void process_query(Query *query) {
     }
 
     if (query->query_type == "FUNCDEF") {
-
+        FunDepQuery * query = (FunDepQuery*) query ;
+        GlobalConstraint globalConstraint ;
+        globalConstraint.add_constraint(query->db_name, query->fd_str) ;
     }
 
     

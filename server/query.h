@@ -34,3 +34,8 @@ class InsertQuery : public TableQuery {
     vector<string> valList ;
 } ;
 
+class FunDepQuery : public DatabaseQuery {
+    public:
+    string fd_str ;
+} ;
+
