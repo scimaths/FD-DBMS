@@ -1,138 +1,99 @@
-/*
-server.cpp
-Inspired from Beej's guide - selectserver.c
-*/
-
-// C Imports
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <netdb.h>
-#include <unistd.h>
-
-// C++ Imports
-#include <string>
 #include <iostream>
-#include <algorithm>
+#include <cstring>
+#include <cstdlib>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <sys/select.h>
+#include <vector>
+#include <thread>
 
-#define PORT "8080"
+#define PORT 12345
+#define BACKLOG 50
 
-// get sockaddr, IPv4 or IPv6
-void* get_in_addr(struct sockaddr *sa) {
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
+std::vector<int> client_sockets;
+
+void handle_client(int client_socket) {
+    char buffer[1024] = {0};
+    int valread;
+    while ((valread = read(client_socket, buffer, sizeof(buffer))) > 0) {
+        std::cout << "Received: " << buffer << std::endl;
+        send(client_socket, "Server received", strlen("Server received"), 0);
+        memset(buffer, 0, sizeof(buffer));
     }
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+    std::cout << "Client disconnected" << std::endl;
+    client_sockets.erase(std::find(client_sockets.begin(), client_sockets.end(), client_socket));
+    close(client_socket);
 }
 
+int main() {
+    int server_socket, client_socket, max_socket, activity, i, valread;
+    struct sockaddr_in server_address, client_address;
+    fd_set readfds;
+    
 
-int main(int argc, char const* argv[]) {
-    // Set of file descriptors
-    fd_set master;
-    fd_set read_fds;
-    int fdmax = 32;
-    // Initialize fd-sets to contain no file descriptors
-    FD_ZERO(&master);
-    FD_ZERO(&read_fds);
+    memset(&server_address, 0, sizeof(server_address));
+    server_address.sin_family = AF_INET;
+    server_address.sin_addr.s_addr = INADDR_ANY;
+    server_address.sin_port = htons(PORT);
 
-    // Listening socket FD
-    int listener;
-    // FD for newly accepted connection
-    int newfd;
-    struct sockaddr_storage remoteaddr;
-    socklen_t addrlen;
-
-    char buf[4096];
-    int nbytes;
-    int result_var;
-    int setsockopt_yes = 1;
-
-    // String version of IP6-address
-    char remoteIP[INET6_ADDRSTRLEN];
-
-    struct addrinfo hints, *ai, *p;
-
-    // Prepare structs for binding
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC; // v4 or v6, either
-    hints.ai_socktype = SOCK_STREAM; // Stream Socket
-    hints.ai_flags = AI_PASSIVE; // Filling our own IP
-    if ((result_var = getaddrinfo(NULL, PORT, &hints, &ai)) != 0) {
-        fprintf(stderr, "server.cpp - %s\n", gai_strerror(result_var));
-        exit(1);
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket == -1) {
+        std::cerr << "Failed to create socket" << std::endl;
+        return 1;
     }
 
-    // Iterate over the linked list set by getaddrinfo
-    for (p = ai; p != NULL; p = p->ai_next) {
-        listener = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-        if (listener < 0) {
-            continue;
-        }
-
-        // Secure port for usage
-        setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &setsockopt_yes, sizeof(int));
-        
-        // Bind to port
-        if (bind(listener, p->ai_addr, p->ai_addrlen) < 0) {
-            close(listener);
-            continue;
-        }
-
-        // If bound to any port 
-        break;
+    if (bind(server_socket, (struct sockaddr *)&server_address, sizeof(server_address)) == -1) {
+        std::cerr << "Failed to bind socket" << std::endl;
+        return 1;
     }
 
-    if (p == NULL) {
-        perror("server.cpp - bind");
-        exit(2);
+    if (listen(server_socket, BACKLOG) == -1) {
+        std::cerr << "Failed to listen on socket" << std::endl;
+        return 1;
     }
 
-    // Cleanup of address infos
-    freeaddrinfo(ai);
+    std::cout << "Server listening on port " << PORT << std::endl;
 
-    // Listen to incoming connections
-    int listen_backlog = 16;
-    if (listen(listener, listen_backlog) < 0) {
-        perror("server.cpp - listen");
-        exit(3);
-    }
-
-    // Listener is added to master set
-    FD_SET(listener, &master);
-    fdmax = listener;
-
-    // Main loop - dealing with individual connections
     while (true) {
-        read_fds = master;
-        if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
-            perror("server.cpp - select");
-            exit(4);
+        FD_ZERO(&readfds);
+        FD_SET(server_socket, &readfds);
+        max_socket = server_socket;
+
+        for (i = 0; i < client_sockets.size(); i++) {
+            client_socket = client_sockets[i];
+            FD_SET(client_socket, &readfds);
+            if (client_socket > max_socket) {
+                max_socket = client_socket;
+            }
         }
 
-        // Iterate over file descriptors & process each
-        for (int i=0; i <= fdmax; ++i) {
-            // Change in FD
-            if (FD_ISSET(i, &read_fds)) {
-                if (i == listener) {
-                    // Listener FD - new connection
-                    addrlen = sizeof(remoteaddr);
-                    newfd = accept(listener, (struct sockaddr *)&remoteaddr, &addrlen);
-                    if (newfd == -1) {
-                        perror("server.cpp - accept");
-                    }
-                    else {
-                        FD_SET(newfd, &master);
-                        fdmax = std::max(fdmax, newfd);
-                    }
-                }
-                else {
-                    // Handle communication from an existing connection
-                }
+        activity = select(max_socket + 1, &readfds, NULL, NULL, NULL);
+        if (activity == -1) {
+            std::cerr << "Failed to select socket" << std::endl;
+            return 1;
+        }
+
+        if (FD_ISSET(server_socket, &readfds)) {
+            client_socket = accept(server_socket, (struct sockaddr *)&client_address, (socklen_t*)&client_address);
+            if (client_socket == -1) {
+                std::cerr << "Failed to accept client connection" << std::endl;
+                continue;
+            }
+            std::cout << "Client connected" << std::endl;
+            std::thread client_thread(handle_client, client_socket);
+            client_thread.detach();
+            client_sockets.push_back(client_socket);
+        }
+
+        for (i = 0; i < client_sockets.size(); i++) {
+            client_socket = client_sockets[i];
+            if (FD_ISSET(client_socket, &readfds)) {
+                // do nothing - this is handled by the thread
             }
         }
     }
+
+    close(server_socket);
+    return 0;
 }

@@ -5,10 +5,10 @@ import socket
 import subprocess
 
 HOST = "127.0.0.1"
-PORT = 8080
+PORT = 12345
 
 if __name__ == "__main__":
-    print("Welcome to FD-DBMS (project under CS387)\nCreated by HV, Vaibhav, Shashwat, Pulkit")
+    print("Welcome to FD-DBMS (project under CS387)\nCreated by Harshvardhan, Vaibhav, Shashwat, Pulkit")
     # infinite REPL loop
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -17,9 +17,13 @@ if __name__ == "__main__":
         data = s.recv(1024)
         print(data.decode())
 
-    while True:
-        statement = input("> ")
-        if statement == "exit":
-            print("Terminated")
-            exit()
+        while True:
+            statement = input("> ")
+            s.sendall(statement.encode())
+            data = s.recv(1024)
+            print(data.decode())
+
+            if statement == "exit":
+                print("Terminated")
+                exit()
         
