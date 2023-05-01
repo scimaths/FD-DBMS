@@ -63,6 +63,10 @@ class GroupedRecord {
 };
 
 string lower(string str);
+string join(vector<string> tokens, string join_str);
+bool is_equal(Value* val_1, Value* val_2);
+void print_records(vector<Record*> records);
+Value* numerical_str_to_value(string str);
 vector<string> strip_brackets_from_tokens(vector<string> tokens) ;
 pair<int, string> separator_expression(vector<string> tokens, vector<string> separator_strs, vector<string> expression_ops) ;
 

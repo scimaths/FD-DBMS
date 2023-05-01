@@ -1,3 +1,4 @@
 0,Alpha,20,80
 1,Beta,21,28
 2,Gama_Dela,22,89
+3,Mama,23,89

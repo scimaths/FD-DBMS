@@ -162,6 +162,89 @@ Value* compute_aggregate(vector<Value*> values, string agg_func) {
     }
 }
 
+// Perform comparison operation on values
+bool compute_filter_binary(Value* left_val, Value* right_val, string filter_op) {
+    // Check equality/inequality for strings
+    if (
+        (filter_op == "!=" || filter_op == "=" || filter_op == "<" || filter_op == "<=" || filter_op == ">" || filter_op == ">=")
+        &&
+        left_val->type == 2 && right_val->type == 2
+    ) {
+        string left_str = ((StringValue*)left_val)->str;
+        string right_str = ((StringValue*)right_val)->str;
+        if (filter_op == "=") {
+            return left_str == right_str;
+        }
+        else if (filter_op == "!=") {
+            return left_str != right_str;
+        }
+        else if (filter_op == "<") {
+            return left_str < right_str;
+        }
+        else if (filter_op == "<=") {
+            return left_str <= right_str;
+        }
+        else if (filter_op == ">") {
+            return left_str > right_str;
+        }
+        else if (filter_op == ">=") {
+            return left_str >= right_str;
+        }
+    }
+    // >< - LIKE operator for regex matching with strings
+    else if (filter_op == "><") {
+        // Check if arguments are strings
+        if (left_val->type != 2 || right_val->type != 2) {
+            cerr << "Illegal comparison - >< requires two strings\n";
+            return 0;
+        }
+        else {
+            regex regex_cmp(((StringValue*)right_val)->str);
+            return regex_match(
+                ((StringValue*)left_val)->str,
+                regex_cmp
+            );
+        }
+    }
+    // One string but all string operators used already
+    else if (left_val->type == 2 || right_val->type == 2) {
+        cerr << "Illegal comparison - Only = != >< available for string comparison\n";
+        return 0;
+    }
+    else {
+        // Get left and right numbers as floats
+        float left_num, right_num;
+        if (left_val->type == 0) {left_num = ((IntValue*)left_val)->num;}
+        else if (left_val->type == 1) {left_num = ((FloatValue*)left_val)->num;}
+        if (right_val->type == 0) {right_num = ((IntValue*)right_val)->num;}
+        else if (right_val->type == 1) {right_num = ((FloatValue*)right_val)->num;}
+
+        // Add individual comparison operators
+        if (filter_op == "<=") {
+            return left_num <= right_num;
+        }
+        else if (filter_op == "<") {
+            return left_num < right_num;
+        }
+        else if (filter_op == ">=") {
+            return left_num >= right_num;
+        }
+        else if (filter_op == ">") {
+            return left_num > right_num;
+        }
+        else if (filter_op == "=") {
+            return fabs(left_num - right_num) < MIN_DIFF;
+        }
+        else if (filter_op == "!=") {
+            return fabs(left_num - right_num) > MIN_DIFF;
+        }
+        else {
+            cerr << "Unidentified comparison operator\n";
+            return false;
+        }
+    }
+}
+
 // Initialize expression class, create expression trees
 Expression::Expression(vector<string> tokens) {
     // Strip brackets from expression
@@ -215,8 +298,19 @@ Value* Expression::evaluate(Record* record) {
     }
     // Atomic expression (fetch record column directly)
     else {
-        result = record->elements[atomic_expr_str];
+        if (record->elements.find(atomic_expr_str) != record->elements.end()) {
+            result = record->elements[atomic_expr_str];
+        }
+        else {
+            result = numerical_str_to_value(atomic_expr_str);
+        }
     }
+    return result;
+}
+
+string Expression::get_name() {
+    string result = "";
+    for (string token: tokens) {result += token;}
     return result;
 }
 
@@ -412,73 +506,39 @@ bool Comparison::evaluate(Record* record) {
     Value* left_val = this->left_expr->evaluate(record);
     Value* right_val = this->right_expr->evaluate(record);
 
-    // Check equality/inequality for strings
-    if (
-        (filter_op == "!=" || filter_op == "=")
-        &&
-        left_val->type == 2 && right_val->type == 2
-    ) {
-        string left_str = ((StringValue*)left_val)->str;
-        string right_str = ((StringValue*)right_val)->str;
-        if (filter_op == "=") {
-            return left_str == right_str;
-        }
-        else if (filter_op == "!=") {
-            return left_str != right_str;
-        }
-    }
-    // >< - LIKE operator for regex matching with strings
-    else if (filter_op == "><") {
-        // Check if arguments are strings
-        if (left_val->type != 2 || right_val->type != 2) {
-            cerr << "Illegal comparison - >< requires two strings\n";
-            return 0;
-        }
-        else {
-            regex regex_cmp(((StringValue*)right_val)->str);
-            return regex_match(
-                ((StringValue*)left_val)->str,
-                regex_cmp
-            );
-        }
-    }
-    // One string but all string operators used already
-    else if (left_val->type == 2 || right_val->type == 2) {
-        cerr << "Illegal comparison - Only = != >< available for string comparison\n";
-        return 0;
-    }
-    else {
-        // Get left and right numbers as floats
-        float left_num, right_num;
-        if (left_val->type == 0) {left_num = ((IntValue*)left_val)->num;}
-        else if (left_val->type == 1) {left_num = ((FloatValue*)left_val)->num;}
-        if (right_val->type == 0) {right_num = ((IntValue*)right_val)->num;}
-        else if (right_val->type == 1) {right_num = ((FloatValue*)right_val)->num;}
+    return compute_filter_binary(left_val, right_val, this->filter_op);
+}
 
-        // Add individual comparison operators
-        if (filter_op == "<=") {
-            return left_num <= right_num;
-        }
-        else if (filter_op == "<") {
-            return left_num < right_num;
-        }
-        else if (filter_op == ">=") {
-            return left_num >= right_num;
-        }
-        else if (filter_op == ">") {
-            return left_num > right_num;
-        }
-        else if (filter_op == "=") {
-            return fabs(left_num - right_num) < MIN_DIFF;
-        }
-        else if (filter_op == "!=") {
-            return fabs(left_num - right_num) > MIN_DIFF;
-        }
-        else {
-            cerr << "Unidentified comparison operator\n";
-            return false;
+// Initialize group-comparison class, create 1-level group-comparison trees
+GroupedComparison::GroupedComparison(vector<string> tokens) {
+    // Update tokens
+    this->tokens = tokens;
+
+    // Iterate over the tokens array, find the index with cmp_token
+    int cmp_index = 0;
+    for (; cmp_index < (int)tokens.size(); ++cmp_index) {
+        if (find(cmp_tokens.begin(), cmp_tokens.end(), tokens[cmp_index]) != cmp_tokens.end()) {
+            break;
         }
     }
+
+    // Create root filter operation
+    this->filter_op = tokens[cmp_index];
+
+    // Set left and right child grouped-expressions
+    vector<string> left_tokens(cmp_index), right_tokens((int)tokens.size() - cmp_index - 1);
+    copy(tokens.begin(), tokens.begin() + cmp_index, left_tokens.begin());
+    copy(tokens.begin() + cmp_index + 1, tokens.end(), right_tokens.begin());
+    this->left_expr = new GroupedExpression(left_tokens);
+    this->right_expr = new GroupedExpression(right_tokens);
+}
+
+// Evaluate a grouped comparison
+bool GroupedComparison::evaluate(GroupedRecord* record) {
+    Value* left_val = this->left_expr->evaluate(record);
+    Value* right_val = this->right_expr->evaluate(record);
+
+    return compute_filter_binary(left_val, right_val, this->filter_op);
 }
 
 // Print comparison tree (depth = 1)
@@ -486,6 +546,18 @@ void dump(Comparison* comparison, int depth) {
     // Dump for COMPARISON
     cout << "Depth - " << depth << '\n';
     cout << "Comparison - ";
+    for (string token: comparison->tokens) {cout << token << " ";}
+    cout << '\n';
+    // Dump for child expressions
+    dump(comparison->left_expr, depth + 1);
+    dump(comparison->right_expr, depth + 1);
+}
+
+// Print group-comparison tree (depth = 1)
+void dump(GroupedComparison* comparison, int depth) {
+    // Dump for COMPARISON
+    cout << "Depth - " << depth << '\n';
+    cout << "Grouped Comparison - ";
     for (string token: comparison->tokens) {cout << token << " ";}
     cout << '\n';
     // Dump for child expressions

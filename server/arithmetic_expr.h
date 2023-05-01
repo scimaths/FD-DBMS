@@ -19,6 +19,7 @@ class Expression {
 
     Expression(vector<string> tokens);
     Value* evaluate(Record* rec);
+    string get_name();
 };
 
 class GroupedExpression {
@@ -50,9 +51,21 @@ class Comparison {
     bool evaluate(Record* rec);
 };
 
+class GroupedComparison {
+    public:
+    vector<string> tokens;
+    string filter_op; // One of [<, <=, >, >=, =, !=, ><] with "><" representing LIKE
+    GroupedExpression *left_expr, *right_expr;
+
+    GroupedComparison(vector<string> tokens);
+    bool evaluate(GroupedRecord* rec);
+};
+
 Value* combine_values_binary(Value* left_val, Value* right_val, string expr_op);
 Value* compute_aggregate(vector<Value*> values, string agg_func);
 Value* combine_possibly_null_values(Value* val_1, Value* val_2, string expr_op);
 void dump(Expression* expression, int depth);
 void dump(Comparison* comparison, int depth);
+void dump(GroupedExpression* group_expression, int depth);
+void dump(GroupedComparison* group_comparison, int depth);
 #endif

@@ -43,6 +43,51 @@ string lower(string str) {
     return result;
 }
 
+string join(vector<string> tokens, string join_str) {
+    string result = tokens[0];
+    for (int idx = 1; idx <= (int)tokens.size(); ++idx) {
+        result += join_str + tokens[idx];
+    }
+    return result;
+}
+
+bool is_equal(Value* val_1, Value* val_2) {
+    // Check for nullity
+    if (val_1 == NULL || val_2 == NULL) {return false;}
+    // Check if types match
+    if (val_1->type != val_2->type) {return false;}
+    // Check type-wise
+    if (val_1->type == 0) {
+        return ((IntValue*)val_1)->num == ((IntValue*)val_2)->num;
+    }
+    else if (val_1->type == 1) {
+        return ((FloatValue*)val_1)->num == ((FloatValue*)val_2)->num;
+    }
+    else if (val_1->type == 2) {
+        return ((StringValue*)val_1)->str == ((StringValue*)val_2)->str;
+    }
+}
+
+void print_records(vector<Record*> records) {
+    for (Record* rec: records) {
+        for (pair<string, Value*> rec_val: rec->elements) {
+            cout << "|" << rec_val.first << " "; rec_val.second->print(); cout << "| ";
+        }
+        cout << '\n';
+    }
+}
+
+Value* numerical_str_to_value(string str) {
+    bool decimal_pres = 0;
+    for (char c: str) {if (c == '.') {decimal_pres = 1;}}
+    if (decimal_pres) {
+        return (Value*)(new FloatValue(stof(str)));
+    }
+    else {
+        return (Value*)(new IntValue(stoi(str)));
+    }
+}
+
 vector<string> strip_brackets_from_tokens(vector<string> tokens) {
     // Remove surrounding brackets
     stack<int> st;
