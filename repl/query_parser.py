@@ -34,6 +34,8 @@ class QueryParser:
         stmt = re.sub(r"\s*\%\s*","%", stmt)
         stmt = re.sub(r"\s*\&\s*","&", stmt)
         stmt = re.sub(r"\s*\|\s*","|", stmt)
+        stmt = stmt.replace("[", " [ ")
+        stmt = stmt.replace("]", " ] ")
         stmt = stmt.replace("(", " ( ")
         stmt = stmt.replace(")", " ) ")
         stmt = stmt.replace(",", " , ")
@@ -88,8 +90,6 @@ class QueryParser:
                 if word == "SELECT":
                     j = i + 1
                     while j < len(words):
-                        if words[j]==",":
-                            j+=1
                         if words[j] in self.aggregates:
                             if words[j+1]=="[":
                                 current_depth = depth+1
@@ -110,6 +110,8 @@ class QueryParser:
                                     select_attr.append("".join(words[j:k]))
                                     select_as_attr.append("".join(words[j:k]))
                                     j=k
+                        if words[j]==",":
+                            j+=1
                         if words[j] == "FROM":
                             break
                         if words[j+1] == "AS":
@@ -230,8 +232,16 @@ class QueryParser:
 
 
 
-parser = QueryParser()
-# query = input()
-# query = 'select frif as f from (select abcd from hshsh  ) where jfiejf>2'
-query = 'SELECT max[id], ref_id, salary - ref_sal FROM ((SELECT id, salary FROM instructor) JOIN (SELECT id as ref_id, salary as ref_salary FROM instructor) ON salary > ref_salary)'
-print(parser.parse_stmt(query))
+# parser = QueryParser()
+# # query = input()
+# # query = 'select frif as f from (select abcd from hshsh  ) where jfiejf>2'
+# query = 'SELECT max[id], ref_id, salary - ref_sal FROM ((SELECT id, salary FROM instructor) JOIN (SELECT id as ref_id, salary as ref_salary FROM instructor) ON salary > ref_salary)'
+# print(parser.parse_stmt(query))
+
+
+
+'''
+SELECT min[name], department from instructor group by department
+
+
+'''
