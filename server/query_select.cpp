@@ -607,6 +607,6 @@ void test_select_query() {
     cout << stringify_records(sel_query->fetch()); cout << '\n';
 }
 
-int main() {
-    test_select_query();
-}
+// int main() {
+//     test_select_query();
+// }

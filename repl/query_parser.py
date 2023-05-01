@@ -39,28 +39,19 @@ class QueryParser:
         stmt = stmt.replace(",", " , ")
         words = stmt.split()
         words = [self.upper_case(word)  for word in words]
-        print(words,"\n")
         depth = 0
         if(stmt.count("(")!=stmt.count(")")):
             print("Invalid Query")
             return
         
         _, parsed_query = self.query_handle(words, depth)
-        pass
+        return parsed_query
     
-    # def new_temp(self):
-    #     QueryParser.temp_count+=1
-    #     return "temp"+str(QueryParser.temp_count)
     
     
     def query_handle(self, words, depth, label="select"):
         
 
-        # Define the list of keywords and clauses
-
-        # Split the query into words
-
-        # Initialize the lists of SELECT items, FROM tables, JOIN conditions, GROUP BY items, ORDER BY items, and the LIMIT count
         select_attr = []
         select_as_attr = []
         from_db = []
@@ -145,11 +136,11 @@ class QueryParser:
                                 if current_depth==depth:
                                     break
                                 k+=1
-                            print("DEPTH increasing to", depth+1)
+                            # print("DEPTH increasing to", depth+1)
                             i, parsed_subquery = self.query_handle(words[j+1:k], depth+1, "from" )
                             j = i+j+2
                             from_db.append(parsed_subquery)
-                            print("DEPTH restored to", depth,"\n")
+                            # print("DEPTH restored to", depth,"\n")
                         if j>=len(words) or words[j] in self.keywords:
                             break
                         from_db.append(words[j])
@@ -188,7 +179,6 @@ class QueryParser:
                         i +=k+1
                         table_name = (parsed_subquery)
                         word = words[i]
-                        print(i, word)
                     else:
                         table_name = words[i]
                     conditions = ""
@@ -229,19 +219,13 @@ class QueryParser:
             else:
                 parsed_query+="FROM {"+",".join(from_db)+"} "
             parsed_query+="WHERE {"+" ".join(filter_conditions)+"} "
-            parsed_query+="GROUP BY {"+",".join(group_by_items)+"} "
+            parsed_query+="GROUPBY {"+",".join(group_by_items)+"} "
             parsed_query+="HAVING {"+" ".join(having_conditions)+"}"
         elif label=="from":
             parsed_query+=",".join(join_conditions)
             
-        print(parsed_query)
-        # print(select_attr,"\n", from_db,"\n",  join_conditions,"\n",  filter_conditions,"\n",   group_by_items,"\n", having_conditions, "\n" )
         return i, parsed_query
         
     
-parser = QueryParser()
-# query = input()
-# query = 'select frif as f from (select abcd from hshsh  ) where jfiejf>2'
-query = 'SELECT id, ref_id, salary - ref_sal FROM ((SELECT id, salary FROM instructor) JOIN (SELECT id as ref_id, salary as ref_salary FROM instructor) ON salary > ref_salary)'
-parser.parse_stmt(query)
+
 
