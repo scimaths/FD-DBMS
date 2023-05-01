@@ -12,8 +12,8 @@ class QueryParser:
             'CREATE TABLE',
             'FUNCDEP'
         ]
-        self.keywords = ["SELECT", "FROM", "NATURAL", "INNER", "LEFT", "RIGHT", "FULL", "JOIN", "ON", "WHERE", "GROUP BY", "HAVING", "ORDER BY", "ASC", "DESC", "LIMIT"]
-        self.clauses = ["SELECT", "FROM", "JOIN", "WHERE", "GROUP BY", "HAVING", "ORDER BY", "LIMIT"]
+        self.keywords = ["SELECT", "FROM", "NATURAL", "INNER", "LEFT", "RIGHT", "FULL", "JOIN", "ON", "WHERE", "GROUP", "HAVING", "ORDER", "ASC", "DESC", "LIMIT"]
+        self.clauses = ["SELECT", "FROM", "JOIN", "WHERE", "GROUP", "HAVING", "ORDER", "LIMIT"]
 
     def parse_stmt(self, stmt):
         
@@ -48,14 +48,15 @@ class QueryParser:
         filter_conditions = []
         join_conditions = []
         group_by_items = []
+        having_conditions = []
         order_by_items = []
-        limit_count = ""
+        limit_count = []
 
         i = 0
 
         while i < len(words):
             word = words[i]
-            next_word = words[i+1] if i+1 < len(words) else None
+            next_word = words[i+1] if i+1 < len(words) else ""
             print(word)
 
             
@@ -119,7 +120,7 @@ class QueryParser:
                         table_alias = words[i+2]
                         i += 2
                     else:
-                        table_alias = None
+                        table_alias = ""
                     from_db.append(table_name)
                     join_conditions.append((join_type, join_word, table_name, table_alias))
 
@@ -127,7 +128,7 @@ class QueryParser:
                 elif word == "GROUP" and next_word=="BY":
                     j = i + 2
                     while j < len(words):
-                        if words[j] in ["HAVING", "ORDER BY", "LIMIT"]:
+                        if words[j] in ["HAVING", "ORDER", "LIMIT"]:
                             break
                         group_by_items.append(words[j])
                         j += 1
@@ -136,9 +137,9 @@ class QueryParser:
                 elif word == "HAVING":
                     j = i + 1
                     while j < len(words):
-                        if words[j] in ["ORDER BY", "LIMIT"]:
+                        if words[j] in ["ORDER", "LIMIT"]:
                             break
-                        join_conditions.append(words[j])
+                        having_conditions.append(words[j])
                         j += 1
                     i = j - 1
 
@@ -147,21 +148,26 @@ class QueryParser:
                     while j < len(words):
                         if words[j] == "LIMIT":
                             break
-                        order_by_items.append((words[j], words[j+1] if j+1 < len(words) and words[j+1] in ["ASC", "DESC"] else None))
-                        j += 1
+                        if j+1 < len(words) and words[j+1] in ["ASC", "DESC"]:
+                            order_by_items.append((words[j], words[j+1]))
+                            j += 2
+                        else:
+                            order_by_items.append((words[j], ""))
+                            j += 1
                     i = j - 1
 
                 elif word == "LIMIT":
-                    limit_count = words[i+1]
+                    limit_count.append(words[i+1])
                     i += 1
 
             i += 1
-        print(name, select_attr,"\n", from_db,"\n",  join_conditions,"\n",  filter_conditions,"\n",   group_by_items,"\n",  order_by_items,"\n",  limit_count,"\n" )
+        print(name, select_attr,"\n", from_db,"\n",  join_conditions,"\n",  filter_conditions,"\n",   group_by_items,"\n", having_conditions, "\n", order_by_items,"\n",  limit_count,"\n" )
         return i
         
     
 parser = QueryParser()
 # query = input()
-query = 'select frif as f from (select abcd from hshsh  ) where jfiejf>2'
+# query = 'select frif as f from (select abcd from hshsh  ) where jfiejf>2'
+query = 'select col1 as col1_name from (select col2,col3 from db1  ) where qwerty>2 group by col1 having col3<3 order by cl5 asc limit 5'
 parser.parse_stmt(query)
 
