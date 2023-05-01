@@ -79,9 +79,7 @@ void process_query(Query *query) {
         create_file(query->get_tablePath() + "/metadata.txt") ;
         create_file(query->get_tablePath() + "/data.txt") ;
 
-        // syntactic check of uniqueList is indeed subset of attrList
-
-        TableMetadata tableMetadata(query->attrList, query->attrMap, query->uniqueList) ;
+        TableMetadata tableMetadata(query->attrList, query->attrType, query->uniqueList) ;
         tableMetadata.dump(query->get_tablePath() + "/metadata.txt") ;
         
         return ;
@@ -97,7 +95,6 @@ void process_query(Query *query) {
 
         // Handle Constraints 
         // delete from table list
-
         delete_folder(query->get_tablePath()) ;
 
         return ;
@@ -132,6 +129,10 @@ void process_query(Query *query) {
         }
 
         append_item_to_file(query->get_tablePath()+"/data.txt", item) ;
+    }
+
+    if (query->query_type == "FUNCDEF") {
+
     }
 
     

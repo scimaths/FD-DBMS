@@ -30,9 +30,9 @@ void LocalConstraint::retrieve(string pathname) {
     }
 }
 
-bool LocalConstraint::check(Record record) {
+bool LocalConstraint::check(Record *record) {
     for (Comparison comparison: comparisonList) {
-        if(!comparison.evaluate(&record)) return false ;
+        if(!comparison.evaluate(record)) return false ;
     }
     return true ;
 } 
