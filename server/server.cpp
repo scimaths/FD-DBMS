@@ -7,6 +7,7 @@
 #include <sys/select.h>
 #include <vector>
 #include <thread>
+#include "query_select.h"
 
 #define PORT 12345
 #define BACKLOG 50
@@ -18,6 +19,12 @@ void handle_client(int client_socket) {
     int valread;
     while ((valread = read(client_socket, buffer, sizeof(buffer))) > 0) {
         std::cout << "Received: " << buffer << std::endl;
+        SelectQuery* sel_query;
+        sel_query = new SelectQuery(string(buffer), "b");
+        cout<<"Object made"<<endl; 
+        string output = stringify_records(sel_query->fetch());
+        cout << output << endl<<endl ;
+        // send(client_socket, output.c_str(), strlen(output.c_str()), 0);
         send(client_socket, "Server received", strlen("Server received"), 0);
         memset(buffer, 0, sizeof(buffer));
     }
