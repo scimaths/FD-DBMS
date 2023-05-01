@@ -605,8 +605,16 @@ void test_select_query() {
     query = "SELECT {max[name],weight} AS {max_name,common_weight} FROM {people} WHERE {weight>0} GROUPBY {weight} HAVING {}";
     sel_query = new SelectQuery(query, "b");
     cout << stringify_records(sel_query->fetch()); cout << '\n';
+
+    query = "SELECT {id,ref_id,salary-ref_salary} AS {id,ref_id,salary-ref_salary} FROM {JOIN {SELECT {id,salary} AS {id,salary} FROM {instructor} WHERE {} GROUPBY {} HAVING {}} {SELECT {id,salary} AS {ref_id,ref_salary} FROM {instructor} WHERE {} GROUPBY {} HAVING {}} {salary>ref_salary}} WHERE {} GROUPBY {} HAVING {}";
+    sel_query = new SelectQuery(query, "univ_db");
+    cout << stringify_records(sel_query->fetch()); cout << '\n';
+
+    query = "SELECT {id.1,id.2,salary.1-salary.2} AS {id_1,id_2,delta_salary} FROM {JOIN {SELECT {id,salary} AS {id,salary} FROM {instructor} WHERE {} GROUPBY {} HAVING {}} {SELECT {id,salary} AS {id,salary} FROM {instructor} WHERE {} GROUPBY {} HAVING {}} {salary.1>0.5*salary.2 && id.1 != id.2}} WHERE {id.1=\"knuth\"} GROUPBY {} HAVING {}";
+    sel_query = new SelectQuery(query, "univ_db");
+    cout << stringify_records(sel_query->fetch()); cout << '\n';
 }
 
-int main() {
-    test_select_query();
-}
+// int main() {
+//     test_select_query();
+// }
