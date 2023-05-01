@@ -20,7 +20,7 @@ void handle_client(int client_socket) {
     while ((valread = read(client_socket, buffer, sizeof(buffer))) > 0) {
         std::cout << "Received: " << buffer << std::endl;
         SelectQuery* sel_query;
-        sel_query = new SelectQuery(string(buffer), "b");
+        sel_query = new SelectQuery(string(buffer), "univ_db");
         cout<<"Object made"<<endl; 
         string output = stringify_records(sel_query->fetch());
         cout << output << endl<<endl ;
